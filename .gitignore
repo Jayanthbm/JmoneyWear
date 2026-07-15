@@ -17,3 +17,4 @@ local.properties
 .freebuff
 .kotlin
 app/release
+*.jks
