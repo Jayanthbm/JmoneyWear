@@ -17,8 +17,8 @@ android {
         applicationId = "com.jayanth.jmoney.wear"
         minSdk = 30
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = (project.findProperty("app.versionCode") as? String)?.toInt() ?: 3
+        versionName = (project.findProperty("app.versionName") as? String) ?: "1.2.0"
 
         // Load development credentials from local.properties
         val localProperties = Properties()
@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.ui.tooling)
     implementation(libs.core.splashscreen)
     implementation(libs.play.services.wearable)

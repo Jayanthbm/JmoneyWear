@@ -41,6 +41,10 @@ import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Bolt
 import com.jayanth.jmoney.wear.data.database.CategoryEntity
 import com.jayanth.jmoney.wear.data.database.PayeeEntity
 import com.jayanth.jmoney.wear.presentation.common.buttons.ActionButton
@@ -141,20 +145,23 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     ActionButton(
-                        text = "➖",
                         onClick = { launchCustomAdd("Expense") },
+                        icon = Icons.Filled.Remove,
+                        text = "Expense",
                         isError = true
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     ActionButton(
-                        text = "➕",
                         onClick = { launchCustomAdd("Income") },
+                        icon = Icons.Filled.Add,
+                        text = "Income",
                         isPrimary = true
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     ActionButton(
-                        text = "⚡",
                         onClick = { showQuickTransactionsOverlay = true },
+                        icon = Icons.Filled.Bolt,
+                        text = "Quick Transaction",
                         isPrimary = false
                     )
                 }
