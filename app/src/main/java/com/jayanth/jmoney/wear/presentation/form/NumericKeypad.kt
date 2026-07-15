@@ -6,13 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +29,9 @@ import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 
+private val KEY_SIZE = 30.dp
+private val SPACING = 2.dp
+
 @Composable
 fun NumericKeypad(
     value: Double,
@@ -38,117 +41,160 @@ fun NumericKeypad(
     modifier: Modifier = Modifier
 ) {
     var displayValue by remember { mutableStateOf(if (value == 0.0) "" else value.toString()) }
-    
+
     BackHandler(onBack = onBack)
-    
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(8.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(SPACING)
         ) {
+            // Top action row: Close | DEL | OK — text buttons
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                ActionButton(
+                    text = "Close",
+                    onClick = onBack,
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    textColor = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.weight(1f)
+                )
+                ActionButton(
+                    text = "DEL",
+                    onClick = {
+                        val strValue = displayValue
+                        if (strValue.isNotEmpty()) {
+                            val newValue = strValue.dropLast(1)
+                            displayValue = newValue
+                            onValueChange(newValue.toDoubleOrNull() ?: 0.0)
+                        }
+                    },
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                ActionButton(
+                    text = "OK",
+                    onClick = onConfirm,
+                    color = MaterialTheme.colorScheme.primary,
+                    textColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
             // Display current value
             Text(
                 text = if (displayValue.isEmpty()) "0" else displayValue,
-                style = MaterialTheme.typography.displaySmall,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(vertical = 1.dp)
             )
-            
-            // Keypad buttons
-            val buttons = listOf(
-                listOf("7", "8", "9"),
-                listOf("4", "5", "6"),
+
+            // Keypad number grid (1-2-3 / 4-5-6 / 7-8-9)
+            val numberRows = listOf(
                 listOf("1", "2", "3"),
-                listOf(".", "0", "⌫")
+                listOf("4", "5", "6"),
+                listOf("7", "8", "9")
             )
-            
-            buttons.forEach { row ->
+
+            numberRows.forEach { row ->
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(SPACING),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     row.forEach { label ->
                         KeypadButton(
                             label = label,
                             onClick = {
-                                when (label) {
-                                    "⌫" -> {
-                                        val strValue = displayValue
-                                        if (strValue.isNotEmpty()) {
-                                            val newValue = strValue.dropLast(1)
-                                            displayValue = newValue
-                                            onValueChange(newValue.toDoubleOrNull() ?: 0.0)
-                                        }
-                                    }
-                                    "." -> {
-                                        if (!displayValue.contains(".")) {
-                                            val newValue = if (displayValue.isEmpty()) {
-                                                "0."
-                                            } else {
-                                                "$displayValue."
-                                            }
-                                            displayValue = newValue
-                                            onValueChange(newValue.toDoubleOrNull() ?: value)
-                                        }
-                                    }
-                                    else -> {
-                                        val newValue = if (displayValue.isEmpty()) {
-                                            label
-                                        } else {
-                                            "$displayValue$label"
-                                        }
-                                        displayValue = newValue
-                                        onValueChange(newValue.toDoubleOrNull() ?: value)
-                                    }
+                                val newValue = if (displayValue.isEmpty()) {
+                                    label
+                                } else {
+                                    "$displayValue$label"
                                 }
+                                displayValue = newValue
+                                onValueChange(newValue.toDoubleOrNull() ?: value)
                             },
                             modifier = Modifier.weight(1f)
                         )
                     }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Action buttons
+
+            // Bottom row: C (clear), 0, . (decimal)
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(SPACING),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = onBack,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                ) {
-                    Text(
-                        text = "Cancel",
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-                Button(
-                    onClick = onConfirm,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text(
-                        text = "OK",
-                        style = MaterialTheme.typography.labelSmall
+                listOf("C", "0", ".").forEach { label ->
+                    KeypadButton(
+                        label = label,
+                        onClick = {
+                            when (label) {
+                                "C" -> {
+                                    displayValue = ""
+                                    onValueChange(0.0)
+                                }
+                                "." -> {
+                                    if (!displayValue.contains(".")) {
+                                        val newValue = if (displayValue.isEmpty()) {
+                                            "0."
+                                        } else {
+                                            "$displayValue."
+                                        }
+                                        displayValue = newValue
+                                        onValueChange(newValue.toDoubleOrNull() ?: value)
+                                    }
+                                }
+                                else -> { // "0"
+                                    val newValue = if (displayValue.isEmpty()) {
+                                        "0"
+                                    } else {
+                                        "$displayValue$label"
+                                    }
+                                    displayValue = newValue
+                                    onValueChange(newValue.toDoubleOrNull() ?: value)
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ActionButton(
+    text: String,
+    onClick: () -> Unit,
+    color: androidx.compose.ui.graphics.Color,
+    textColor: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .height(26.dp)
+            .clip(RoundedCornerShape(13.dp)),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = color,
+            contentColor = textColor
+        )
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -161,7 +207,8 @@ private fun KeypadButton(
     Button(
         onClick = onClick,
         modifier = modifier
-            .size(48.dp)
+            .height(KEY_SIZE)
+            .width(KEY_SIZE)
             .clip(CircleShape),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -170,8 +217,7 @@ private fun KeypadButton(
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.titleMedium,
-            fontSize = 20.sp,
+            fontSize = 14.sp,
             textAlign = TextAlign.Center
         )
     }
