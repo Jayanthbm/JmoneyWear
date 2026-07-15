@@ -163,7 +163,9 @@ class DashboardViewModel @Inject constructor(
         payeeName: String?,
         payeeLogo: String?,
         description: String?,
-        productLink: String? = null
+        productLink: String? = null,
+        latitude: Double? = null,
+        longitude: Double? = null
     ) {
         if (userId.isEmpty()) return
         viewModelScope.launch {
@@ -184,8 +186,8 @@ class DashboardViewModel @Inject constructor(
                 userId = userId,
                 productLink = productLink,
                 tid = 0,
-                latitude = null,
-                longitude = null,
+                latitude = latitude,
+                longitude = longitude,
                 groupId = null,
                 groupName = null,
                 syncStatus = 1,
