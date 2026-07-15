@@ -19,7 +19,15 @@ com.jayanth.jmoney.wear/
 │   │   ├── AuthRepository.kt             # Auth interface
 │   │   ├── AuthRepositoryImpl.kt         # Auth implementation
 │   │   ├── SyncRepository.kt             # Sync interface
-│   │   └── SyncRepositoryImpl.kt         # Sync implementation
+│   │   └── SyncRepositoryImpl.kt         # Sync implementation (refactored, ~150 lines)
+│   ├── sync/                             # Entity-specific sync classes
+│   │   ├── TransactionSync.kt            # Transaction sync logic
+│   │   ├── CategorySync.kt               # Category sync logic
+│   │   ├── PayeeSync.kt                  # Payee sync logic
+│   │   ├── BudgetSync.kt                 # Budget sync logic
+│   │   ├── GoalSync.kt                   # Goal sync logic
+│   │   ├── QuickTransactionSync.kt       # Quick transaction sync logic
+│   │   └── TransactionGroupSync.kt       # Transaction group sync logic
 │   └── storage/                          # Secure storage
 │       └── SecureStorage.kt             # Encrypted storage
 ├── di/                                   # Dependency injection
@@ -34,9 +42,25 @@ com.jayanth.jmoney.wear/
     ├── budgets/                          # Budgets feature
     │   ├── BudgetsScreen.kt
     │   └── BudgetsViewModel.kt
+    ├── common/                           # Reusable UI component library
+    │   ├── buttons/
+    │   │   └── ActionButton.kt           # Reusable action button
+    │   ├── cards/
+    │   │   ├── InfoCard.kt               # General information card
+    │   │   ├── MetricCard.kt             # Metric display card
+    │   │   └── TransactionCard.kt        # Transaction display card
+    │   ├── loading/
+    │   │   └── LoadingIndicator.kt       # Loading progress indicator
+    │   └── overlays/
+    │       └── FullScreenOverlay.kt      # Full screen overlay container
     ├── dashboard/                        # Dashboard feature
     │   ├── DashboardScreen.kt
     │   └── DashboardViewModel.kt
+    ├── form/                             # Transaction form components
+    │   ├── CategorySelector.kt           # Category selection overlay
+    │   ├── NumericKeypad.kt              # Custom numeric keypad
+    │   ├── PayeeSelector.kt              # Payee selection overlay
+    │   └── TransactionForm.kt            # Transaction form composable
     ├── goals/                            # Goals feature
     │   ├── GoalsScreen.kt
     │   └── GoalsViewModel.kt

@@ -1,0 +1,82 @@
+package com.jayanth.jmoney.wear.data.sync
+
+import androidx.room.withTransaction
+import com.jayanth.jmoney.wear.data.database.AppDatabase
+import com.jayanth.jmoney.wear.data.database.QuickTransactionDao
+import com.jayanth.jmoney.wear.data.database.QuickTransactionEntity
+import com.jayanth.jmoney.wear.data.network.dto.SupabaseQuickTransaction
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.postgrest.from
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class QuickTransactionSync @Inject constructor(
+    private val supabaseClient: SupabaseClient,
+    private val db: AppDatabase,
+    private val quickTransactionDao: QuickTransactionDao
+) {
+    suspend fun pushLocalChanges(userId: String) {
+        val unsynced = quickTransactionDao.getUnsynced(userId)
+        for (qt in unsynced) {
+            if (qt.deleted == 1) {
+                try {
+                    supabaseClient.from("quick_transactions").delete {
+                        filter { eq("id", qt.id) }
+                    }
+                    quickTransactionDao.delete(qt.id)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            } else {
+                val payload = SupabaseQuickTransaction(
+                    id = qt.id,
+                    name = qt.name,
+                    type = qt.type,
+                    amount = qt.amount,
+                    categoryId = qt.categoryId,
+                    payeeId = qt.payeeId,
+                    description = qt.description,
+                    userId = qt.userId,
+                    productLink = qt.productLink,
+                    priority = qt.priority,
+                    identifier = qt.identifier
+                )
+                try {
+                    supabaseClient.from("quick_transactions").upsert(payload)
+                    quickTransactionDao.updateSyncStatus(qt.id, 0)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    suspend fun syncRemoteChanges(userId: String) {
+        val response = supabaseClient.from("quick_transactions").select {
+            filter { eq("user_id", userId) }
+        }
+        val remoteList = response.decodeList<SupabaseQuickTransaction>()
+        val entities = remoteList.map { item ->
+            QuickTransactionEntity(
+                id = item.id,
+                name = item.name,
+                type = item.type,
+                amount = item.amount,
+                categoryId = item.categoryId,
+                payeeId = item.payeeId,
+                description = item.description,
+                userId = item.userId,
+                productLink = item.productLink,
+                priority = item.priority,
+                identifier = item.identifier,
+                syncStatus = 0,
+                deleted = 0
+            )
+        }
+        db.withTransaction {
+            quickTransactionDao.deleteAllForUser(userId)
+            quickTransactionDao.insertOrReplace(entities)
+        }
+    }
+}

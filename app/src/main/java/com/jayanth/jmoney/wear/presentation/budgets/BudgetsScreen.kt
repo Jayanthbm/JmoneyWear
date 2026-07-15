@@ -30,6 +30,7 @@ import androidx.wear.compose.material3.Card
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.jayanth.jmoney.wear.presentation.common.loading.LoadingIndicator
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
 import com.jayanth.jmoney.wear.presentation.utils.formatRelativeTime
@@ -49,7 +50,7 @@ fun BudgetsScreen(
         contentAlignment = Alignment.Center
     ) {
         if (state.isLoading) {
-            CircularProgressIndicator()
+            LoadingIndicator()
         } else if (state.budgets.isEmpty()) {
             Text(
                 text = "No budgets found",
