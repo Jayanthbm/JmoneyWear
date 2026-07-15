@@ -26,6 +26,8 @@ import androidx.wear.compose.material3.Card
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.jayanth.jmoney.wear.presentation.common.cards.InfoCard
+import com.jayanth.jmoney.wear.presentation.common.loading.LoadingIndicator
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import com.jayanth.jmoney.wear.presentation.utils.formatRelativeTime
 
@@ -60,50 +62,18 @@ fun SettingsScreen(
 
             // User account info
             item {
-                Card(
-                    onClick = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 6.dp)
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "Account",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = state.userEmail ?: "Not logged in",
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
+                InfoCard(
+                    title = "Account",
+                    subtitle = state.userEmail ?: "Not logged in"
+                )
             }
 
             // Last Sync info
             item {
-                Card(
-                    onClick = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "Last Sync",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = formatRelativeTime(state.lastSyncTimestamp),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
+                InfoCard(
+                    title = "Last Sync",
+                    subtitle = formatRelativeTime(state.lastSyncTimestamp)
+                )
             }
 
             // Force Full Sync Action
@@ -116,11 +86,7 @@ fun SettingsScreen(
                             .fillMaxWidth()
                             .padding(vertical = 8.dp)
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .height(24.dp)
-                                .width(24.dp)
-                        )
+                        LoadingIndicator()
                         state.syncMessage?.let {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(

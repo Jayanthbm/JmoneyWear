@@ -31,6 +31,7 @@ import androidx.wear.compose.material3.Card
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.jayanth.jmoney.wear.presentation.common.loading.LoadingIndicator
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
 import com.jayanth.jmoney.wear.presentation.utils.formatRelativeTime
@@ -50,7 +51,7 @@ fun GoalsScreen(
         contentAlignment = Alignment.Center
     ) {
         if (state.isLoading) {
-            CircularProgressIndicator()
+            LoadingIndicator()
         } else if (state.goals.isEmpty()) {
             Text(
                 text = "No goals found",

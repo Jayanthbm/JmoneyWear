@@ -21,7 +21,15 @@ app/src/main/java/com/jayanth/jmoney/wear/
 │   │   ├── AuthRepository.kt             # Authentication repository interface
 │   │   ├── AuthRepositoryImpl.kt         # Authentication implementation
 │   │   ├── SyncRepository.kt             # Sync repository interface
-│   │   └── SyncRepositoryImpl.kt         # Sync implementation (593 lines)
+│   │   └── SyncRepositoryImpl.kt         # Sync implementation (~150 lines, refactored)
+│   ├── sync/                             # Entity-specific sync classes
+│   │   ├── TransactionSync.kt            # Transaction sync logic
+│   │   ├── CategorySync.kt               # Category sync logic
+│   │   ├── PayeeSync.kt                  # Payee sync logic
+│   │   ├── BudgetSync.kt                 # Budget sync logic
+│   │   ├── GoalSync.kt                   # Goal sync logic
+│   │   ├── QuickTransactionSync.kt       # Quick transaction sync logic
+│   │   └── TransactionGroupSync.kt       # Transaction group sync logic
 │   └── storage/
 │       └── SecureStorage.kt             # Encrypted storage for session
 ├── di/
@@ -36,9 +44,25 @@ app/src/main/java/com/jayanth/jmoney/wear/
     ├── budgets/
     │   ├── BudgetsScreen.kt              # Budgets UI
     │   └── BudgetsViewModel.kt           # Budgets logic
+    ├── common/                           # Reusable UI components
+    │   ├── buttons/
+    │   │   └── ActionButton.kt           # Reusable action button
+    │   ├── cards/
+    │   │   ├── InfoCard.kt               # General info card
+    │   │   ├── MetricCard.kt             # Metric display card
+    │   │   └── TransactionCard.kt        # Transaction display card
+    │   ├── loading/
+    │   │   └── LoadingIndicator.kt       # Loading indicator
+    │   └── overlays/
+    │       └── FullScreenOverlay.kt      # Full screen overlay
     ├── dashboard/
-    │   ├── DashboardScreen.kt            # Dashboard UI (966 lines)
+    │   ├── DashboardScreen.kt            # Dashboard UI (~250 lines, refactored)
     │   └── DashboardViewModel.kt         # Dashboard logic
+    ├── form/                             # Transaction form components
+    │   ├── CategorySelector.kt           # Category selection overlay
+    │   ├── NumericKeypad.kt              # Custom numeric keypad
+    │   ├── PayeeSelector.kt              # Payee selection overlay
+    │   └── TransactionForm.kt            # Transaction form composable
     ├── goals/
     │   ├── GoalsScreen.kt                # Goals UI
     │   └── GoalsViewModel.kt             # Goals logic
@@ -277,12 +301,14 @@ The Room database contains 7 entities matching the React Native app schema:
 - Consistent naming conventions
 - Material 3 design system usage
 
-### Areas for Improvement
-- **DashboardScreen.kt is 966 lines**: Too large, should be split
-- **Transaction form logic embedded**: Not reusable across screens
-- **SyncRepositoryImpl.kt is 593 lines**: Large, could be split by entity
-- **No reusable UI components**: Cards, buttons duplicated across screens
-- **Missing numeric keypad**: Uses RemoteInput (system keyboard) for amount entry
+### Areas for Improvement (Resolved by Refactoring A-C)
+- ✅ **DashboardScreen**: Reduced from 966 to ~250 lines via extraction
+- ✅ **Transaction form logic**: Extracted into reusable TransactionForm composable
+- ✅ **SyncRepositoryImpl**: Reduced from 593 to ~150 lines, split into 7 entity-specific sync classes
+- ✅ **Reusable UI components**: Created common component library (InfoCard, MetricCard, TransactionCard, ActionButton, LoadingIndicator, FullScreenOverlay)
+- ✅ **Custom numeric keypad**: Implemented with decimal support and OK/Cancel buttons
+
+### Remaining Areas for Improvement
 - **No WorkManager integration**: Sync only manual, no background sync
 - **Limited error recovery**: Some sync errors only logged, not retried
 - **No unit tests**: No test coverage implemented
@@ -309,7 +335,7 @@ These are exposed as BuildConfig fields for use in authentication logic.
 The project is ready for:
 1. **Phase 9**: Tiles implementation (10 tiles planned)
 2. **Phase 10**: Complications implementation (6 complications planned)
-3. **Refactoring**: Modularization to address code smells
+3. **Further Refactoring**: WorkManager integration, error recovery, testing, modularization
 4. **Testing**: Unit and integration test coverage
 5. **Performance**: Optimization for battery and memory
 6. **Polish**: Animations, transitions, accessibility improvements
