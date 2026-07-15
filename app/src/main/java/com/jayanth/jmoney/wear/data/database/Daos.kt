@@ -107,10 +107,10 @@ interface PayeeDao {
 
 @Dao
 interface QuickTransactionDao {
-    @Query("SELECT * FROM quick_transactions WHERE user_id = :userId AND deleted = 0 ORDER BY priority DESC, name")
+    @Query("SELECT * FROM quick_transactions WHERE user_id = :userId AND deleted = 0 ORDER BY priority ASC, name")
     fun getQuickTransactionsFlow(userId: String): Flow<List<QuickTransactionEntity>>
 
-    @Query("SELECT * FROM quick_transactions WHERE user_id = :userId AND deleted = 0 ORDER BY priority DESC, name")
+    @Query("SELECT * FROM quick_transactions WHERE user_id = :userId AND deleted = 0 ORDER BY priority ASC, name")
     suspend fun getQuickTransactions(userId: String): List<QuickTransactionEntity>
 
     @Query("SELECT * FROM quick_transactions WHERE user_id = :userId AND sync_status = 1")
