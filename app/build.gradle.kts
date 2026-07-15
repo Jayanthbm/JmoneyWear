@@ -13,19 +13,35 @@ android {
     namespace = "com.jayanth.jmoney.wear"
     compileSdk = 36
 
+    // Load development credentials from local.properties
+    val localProperties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        FileInputStream(localPropertiesFile).use { localProperties.load(it) }
+    }
+
+    signingConfigs {
+        create("release") {
+            val keystorePath = localProperties.getProperty("keystore.path") ?: ""
+            val keystorePassword = localProperties.getProperty("keystore.password") ?: ""
+            val keyAliasStr = localProperties.getProperty("key.alias") ?: ""
+            val keyPasswordStr = localProperties.getProperty("key.password") ?: ""
+
+            if (keystorePath.isNotEmpty()) {
+                storeFile = rootProject.file(keystorePath)
+                storePassword = keystorePassword
+                keyAlias = keyAliasStr
+                keyPassword = keyPasswordStr
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.jayanth.jmoney.wear"
         minSdk = 30
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1"
-
-        // Load development credentials from local.properties
-        val localProperties = Properties()
-        val localPropertiesFile = rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            FileInputStream(localPropertiesFile).use { localProperties.load(it) }
-        }
+        versionCode = (project.findProperty("app.versionCode") as? String)?.toInt() ?: 3
+        versionName = (project.findProperty("app.versionName") as? String) ?: "1.2.0"
 
         val devEmail = localProperties.getProperty("dev.email") ?: ""
         val devPassword = localProperties.getProperty("dev.password") ?: ""
@@ -36,9 +52,18 @@ android {
 
     buildTypes {
         release {
-            optimization {
-                enable = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            val keystorePath = localProperties.getProperty("keystore.path") ?: ""
+            if (keystorePath.isNotEmpty()) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
             }
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -57,6 +82,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.ui.tooling)
     implementation(libs.core.splashscreen)
     implementation(libs.play.services.wearable)

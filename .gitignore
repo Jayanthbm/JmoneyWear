@@ -6,7 +6,8 @@
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+/.idea/assetWizardSettings.
+/.idea/vcs.xml
 .DS_Store
 /build
 /captures
@@ -15,3 +16,5 @@
 local.properties
 .freebuff
 .kotlin
+app/release
+*.jks

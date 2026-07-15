@@ -2,6 +2,9 @@ package com.jayanth.jmoney.wear.presentation.dashboard
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +44,10 @@ import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Bolt
 import com.jayanth.jmoney.wear.data.database.CategoryEntity
 import com.jayanth.jmoney.wear.data.database.PayeeEntity
 import com.jayanth.jmoney.wear.presentation.common.buttons.ActionButton
@@ -61,8 +68,78 @@ fun DashboardScreen(
     val listState = rememberTransformingLazyColumnState()
     val context = LocalContext.current
 
+    // Location permissions state
+    var locationPermissionGranted by remember {
+        mutableStateOf(
+            context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+            context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        locationPermissionGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] == true
+    }
+
     // Transaction Form Overlay State
     var showTransactionFormOverlay by remember { mutableStateOf(false) }
+    var currentLocation by remember { mutableStateOf<android.location.Location?>(null) }
+
+    // Request location permissions and fetch location when the transaction form is displayed
+    LaunchedEffect(showTransactionFormOverlay, locationPermissionGranted) {
+        if (showTransactionFormOverlay) {
+            if (!locationPermissionGranted) {
+                permissionLauncher.launch(
+                    arrayOf(
+                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            } else {
+                try {
+                    val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+                    
+                    // Get last known location first (fast fallback)
+                    val lastKnown = if (context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                        context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                        locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                            ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                            ?: locationManager.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
+                    } else null
+                    if (lastKnown != null) {
+                        currentLocation = lastKnown
+                    }
+
+                    // Request a fresh location asynchronously (API 30+)
+                    if (context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                        context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                        val provider = if (locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)) {
+                            android.location.LocationManager.GPS_PROVIDER
+                        } else {
+                            android.location.LocationManager.NETWORK_PROVIDER
+                        }
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                            locationManager.getCurrentLocation(
+                                provider,
+                                null,
+                                context.mainExecutor
+                            ) { loc ->
+                                if (loc != null) {
+                                    currentLocation = loc
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    // ignore
+                }
+            }
+        } else {
+            currentLocation = null
+        }
+    }
     var transactionFormData by remember { 
         mutableStateOf(
             TransactionFormData(
@@ -141,20 +218,23 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     ActionButton(
-                        text = "➖",
                         onClick = { launchCustomAdd("Expense") },
+                        icon = Icons.Filled.Remove,
+                        text = "Expense",
                         isError = true
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     ActionButton(
-                        text = "➕",
                         onClick = { launchCustomAdd("Income") },
+                        icon = Icons.Filled.Add,
+                        text = "Income",
                         isPrimary = true
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     ActionButton(
-                        text = "⚡",
                         onClick = { showQuickTransactionsOverlay = true },
+                        icon = Icons.Filled.Bolt,
+                        text = "Quick Transaction",
                         isPrimary = false
                     )
                 }
@@ -411,6 +491,28 @@ fun DashboardScreen(
                 categories = state.categories,
                 payees = state.payees,
                 onConfirm = { formData ->
+                    var lat: Double? = currentLocation?.latitude
+                    var lon: Double? = currentLocation?.longitude
+                    if (lat == null || lon == null) {
+                        if (locationPermissionGranted) {
+                            try {
+                                val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+                                val lastKnown = if (context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                                    context.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                                    locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                                        ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                                        ?: locationManager.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
+                                } else null
+                                if (lastKnown != null) {
+                                    lat = lastKnown.latitude
+                                    lon = lastKnown.longitude
+                                }
+                            } catch (e: Exception) {
+                                // ignore to avoid crash
+                            }
+                        }
+                    }
+
                     viewModel.addTransaction(
                         amount = formData.amount,
                         type = formData.type,
@@ -422,7 +524,9 @@ fun DashboardScreen(
                         payeeName = formData.payee?.name,
                         payeeLogo = formData.payee?.logo,
                         description = formData.description,
-                        productLink = activeQuickTxItem?.template?.productLink
+                        productLink = activeQuickTxItem?.template?.productLink,
+                        latitude = lat,
+                        longitude = lon
                     )
                     showTransactionFormOverlay = false
                     val displayLabel = activeQuickTxItem?.template?.name ?: formData.category?.name ?: "Transaction"

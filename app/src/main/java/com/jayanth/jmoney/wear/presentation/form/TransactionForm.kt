@@ -34,6 +34,11 @@ import androidx.wear.compose.material3.Card
 import androidx.wear.compose.material3.CardDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.Icon
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.wear.input.RemoteInputIntentHelper
 import com.jayanth.jmoney.wear.data.database.CategoryEntity
 import com.jayanth.jmoney.wear.data.database.PayeeEntity
@@ -252,14 +257,21 @@ fun TransactionForm(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
                         ) {
                             Button(
                                 onClick = onCancel,
-                                colors = ButtonDefaults.filledTonalButtonColors(),
-                                modifier = Modifier.weight(1f)
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                ),
+                                modifier = Modifier.size(52.dp)
                             ) {
-                                Text("Cancel", style = MaterialTheme.typography.labelSmall)
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "Cancel",
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
                             Button(
                                 onClick = {
@@ -281,9 +293,13 @@ fun TransactionForm(
                                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                                 ),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.size(52.dp)
                             ) {
-                                Text("OK", style = MaterialTheme.typography.labelSmall)
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = "OK",
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
                         }
                     }
