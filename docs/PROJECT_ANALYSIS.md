@@ -209,7 +209,8 @@ The Room database contains 7 entities matching the React Native app schema:
 - Implemented Tile 5: **Quick Transaction Tile** layout and logic using Protolayout (launches MainActivity with action extra)
 - Implemented Tile 11 (combined): **Quick Actions Tile** layout (combined side-by-side row of Expense, Income, and Quick Transaction actions)
 - Implemented Tile 6: **Monthly Expense Tile** layout (shows current month and total monthly expenses using Protolayout)
-- Registered `RemainingForPeriodTileService`, `UpcomingPayDayTileService`, `QuickAddExpenseTileService`, `QuickAddIncomeTileService`, `QuickTransactionTileService`, `QuickActionsTileService`, and `MonthlyExpenseTileService` in `AndroidManifest.xml`
+- Implemented Tile 7: **Monthly Income Tile** layout (shows current month and total monthly income using Protolayout)
+- Registered `RemainingForPeriodTileService`, `UpcomingPayDayTileService`, `QuickAddExpenseTileService`, `QuickAddIncomeTileService`, `QuickTransactionTileService`, `QuickActionsTileService`, `MonthlyExpenseTileService`, and `MonthlyIncomeTileService` in `AndroidManifest.xml`
 
 ## Business Logic Comparison with React Native
 

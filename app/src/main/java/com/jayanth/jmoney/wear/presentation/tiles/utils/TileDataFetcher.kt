@@ -40,6 +40,17 @@ class TileDataFetcher @Inject constructor(
         val monthStr = today.format(java.time.format.DateTimeFormatter.ofPattern("LLL")).uppercase()
         return ExpenseData(expense, monthStr)
     }
+
+    suspend fun fetchMonthlyIncome(): IncomeData {
+        val userId = authRepository.getCurrentUserId() ?: return IncomeData(0.0, "")
+        val today = LocalDate.now()
+        val monthStart = today.withDayOfMonth(1).toString()
+        val monthEnd = today.withDayOfMonth(today.lengthOfMonth()).toString()
+
+        val income = transactionDao.getIncomeSummary(userId, monthStart, monthEnd) ?: 0.0
+        val monthStr = today.format(java.time.format.DateTimeFormatter.ofPattern("LLL")).uppercase()
+        return IncomeData(income, monthStr)
+    }
 }
 
 data class RemainingData(
@@ -48,6 +59,11 @@ data class RemainingData(
 )
 
 data class ExpenseData(
+    val amount: Double,
+    val month: String
+)
+
+data class IncomeData(
     val amount: Double,
     val month: String
 )
