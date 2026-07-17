@@ -51,6 +51,11 @@ class TileDataFetcher @Inject constructor(
         val monthStr = today.format(java.time.format.DateTimeFormatter.ofPattern("LLL")).uppercase()
         return IncomeData(income, monthStr)
     }
+
+    suspend fun fetchNetWorth(): Double {
+        val userId = authRepository.getCurrentUserId() ?: return 0.0
+        return transactionDao.getNetWorth(userId) ?: 0.0
+    }
 }
 
 data class RemainingData(

@@ -19,4 +19,6 @@
     <string name="tile_monthly_expense_desc">Shows your total expenses for the current month.</string>
     <string name="tile_monthly_income_label">Monthly Income</string>
     <string name="tile_monthly_income_desc">Shows your total income for the current month.</string>
+    <string name="tile_net_worth_label">Net Worth</string>
+    <string name="tile_net_worth_desc">Shows your current net worth (total income minus total expense).</string>
 </resources>

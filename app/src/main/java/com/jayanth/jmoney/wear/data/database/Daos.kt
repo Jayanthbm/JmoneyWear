@@ -44,6 +44,9 @@ interface TransactionDao {
     @Query("SELECT SUM(CASE WHEN type = 'Income' THEN amount ELSE -amount END) FROM transactions WHERE user_id = :userId AND deleted = 0")
     fun getNetWorthFlow(userId: String): Flow<Double?>
 
+    @Query("SELECT SUM(CASE WHEN type = 'Income' THEN amount ELSE -amount END) FROM transactions WHERE user_id = :userId AND deleted = 0")
+    suspend fun getNetWorth(userId: String): Double?
+
     @Query("SELECT SUM(amount) FROM transactions WHERE user_id = :userId AND type = 'Expense' AND date = :todayDate AND deleted = 0")
     fun getSpentTodayFlow(userId: String, todayDate: String): Flow<Double?>
 
