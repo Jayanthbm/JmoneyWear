@@ -5,7 +5,7 @@ import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.TimelineBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
-import androidx.wear.tiles.ResourceBuilders.Resources
+import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
@@ -22,15 +22,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class JmoneyTileService : TileService() {
+class RemainingForPeriodTileService : TileService() {
 
     @Inject
     lateinit var dataFetcher: TileDataFetcher
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    override fun onTileRequest(requestParams: androidx.wear.tiles.RequestBuilders.TileRequest): com.google.common.util.concurrent.ListenableFuture<androidx.wear.tiles.TileBuilders.Tile> {
-        return CallbackToFutureAdapter.getFuture<androidx.wear.tiles.TileBuilders.Tile> { completer ->
+    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> {
+        return CallbackToFutureAdapter.getFuture<Tile> { completer ->
             serviceScope.launch {
                 try {
                     val isLoggedIn = dataFetcher.isLoggedIn()
@@ -50,7 +50,7 @@ class JmoneyTileService : TileService() {
                         .build()
 
                     val layout = RemainingForPeriodTile.buildLayout(
-                        this@JmoneyTileService,
+                        this@RemainingForPeriodTileService,
                         protoDeviceParams,
                         remainingData,
                         isLoggedIn
@@ -82,8 +82,8 @@ class JmoneyTileService : TileService() {
         }
     }
 
-    override fun onTileResourcesRequest(requestParams: androidx.wear.tiles.RequestBuilders.ResourcesRequest): com.google.common.util.concurrent.ListenableFuture<androidx.wear.protolayout.ResourceBuilders.Resources> {
-        return CallbackToFutureAdapter.getFuture<androidx.wear.protolayout.ResourceBuilders.Resources> { completer ->
+    override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> {
+        return CallbackToFutureAdapter.getFuture<Resources> { completer ->
             try {
                 val resources = TileResourceBuilder.buildResources(this)
                 completer.set(resources)

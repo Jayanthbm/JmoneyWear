@@ -203,7 +203,8 @@ The Room database contains 7 entities matching the React Native app schema:
 ### Phase 9: Tiles (In Progress)
 - Implemented Tile infrastructure including `TileDataFetcher` and `TileResourceBuilder`
 - Implemented Tile 1: **Remaining For Period Tile** layout and logic using Protolayout and Hilt
-- Registered `JmoneyTileService` in `AndroidManifest.xml`
+- Implemented Tile 2: **Upcoming Pay Day Tile** layout and logic using Protolayout
+- Registered `RemainingForPeriodTileService` and `UpcomingPayDayTileService` in `AndroidManifest.xml`
 
 ## Business Logic Comparison with React Native
 

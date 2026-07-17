@@ -3,4 +3,8 @@
     <string name="hello_world">Hello, %1$s!</string>
     <string name="tile_service_label">Jmoney</string>
     <string name="tile_service_description">Shows your Jmoney financial status at a glance.</string>
+    <string name="tile_remaining_label">Remaining</string>
+    <string name="tile_remaining_desc">Remaining budget or overspent amount for the current period.</string>
+    <string name="tile_payday_label">Pay Day Countdown</string>
+    <string name="tile_payday_desc">Countdown to your next pay day.</string>
 </resources>
