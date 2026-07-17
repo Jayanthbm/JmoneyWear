@@ -75,11 +75,13 @@ com.jayanth.jmoney.wear/
     │   ├── UpcomingPayDayTileService.kt  # Upcoming pay day tile service
     │   ├── QuickAddExpenseTileService.kt # Quick add expense tile service
     │   ├── QuickAddIncomeTileService.kt  # Quick add income tile service
+    │   ├── QuickTransactionTileService.kt # Quick transaction tile service
     │   ├── tiles/
     │   │   ├── RemainingForPeriodTile.kt # Remaining for period tile layout
     │   │   ├── UpcomingPayDayTile.kt     # Upcoming pay day tile layout
     │   │   ├── QuickAddExpenseTile.kt    # Quick add expense tile layout
-    │   │   └── QuickAddIncomeTile.kt     # Quick add income tile layout
+    │   │   ├── QuickAddIncomeTile.kt     # Quick add income tile layout
+    │   │   └── QuickTransactionTile.kt   # Quick transaction tile layout
     │   └── utils/
     │       ├── TileDataFetcher.kt        # Data fetcher for tiles
     │       └── TileResourceBuilder.kt    # Resource builder for tiles

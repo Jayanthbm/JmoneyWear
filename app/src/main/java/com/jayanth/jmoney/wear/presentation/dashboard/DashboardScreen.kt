@@ -185,6 +185,8 @@ fun DashboardScreen(
                 launchCustomAdd("Expense")
             } else if (initialAction == "add_income") {
                 launchCustomAdd("Income")
+            } else if (initialAction == "open_quick_transactions") {
+                showQuickTransactionsOverlay = true
             }
             onConsumeAction()
         }
