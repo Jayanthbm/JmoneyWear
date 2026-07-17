@@ -9,4 +9,6 @@
     <string name="tile_payday_desc">Countdown to your next pay day.</string>
     <string name="tile_add_expense_label">Quick Add Expense</string>
     <string name="tile_add_expense_desc">Quick access to log a new expense transaction.</string>
+    <string name="tile_add_income_label">Quick Add Income</string>
+    <string name="tile_add_income_desc">Quick access to log a new income transaction.</string>
 </resources>
