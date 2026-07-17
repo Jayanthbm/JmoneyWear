@@ -12,10 +12,26 @@ import javax.inject.Singleton
 class TileDataFetcher @Inject constructor(
     private val transactionDao: TransactionDao,
     private val budgetDao: BudgetDao,
+    private val goalDao: com.jayanth.jmoney.wear.data.database.GoalDao,
     private val authRepository: AuthRepository
 ) {
     fun isLoggedIn(): Boolean {
         return authRepository.getCurrentUserId() != null
+    }
+
+    suspend fun fetchGoalProgress(goalId: String): GoalProgressData? {
+        val userId = authRepository.getCurrentUserId() ?: return null
+        val goals = goalDao.getGoals(userId)
+        val goal = goals.firstOrNull { it.id == goalId } ?: return null
+
+        val pct = if (goal.goalAmount > 0) (goal.currentAmount / goal.goalAmount) else 0.0
+
+        return GoalProgressData(
+            name = goal.name,
+            saved = goal.currentAmount,
+            target = goal.goalAmount,
+            percentage = pct
+        )
     }
 
     suspend fun fetchRemainingForPeriod(): RemainingData {
@@ -129,3 +145,11 @@ data class BudgetSpendingData(
     val advice: String,
     val isOverspent: Boolean
 )
+
+data class GoalProgressData(
+    val name: String,
+    val saved: Double,
+    val target: Double,
+    val percentage: Double
+)
+

@@ -30,4 +30,11 @@
     <string name="tile_budget4_label">Budget Tracker 4</string>
     <string name="tile_budget4_desc">Shows spending and progress for fourth configured budget category.</string>
     <string name="budget_tile_config_label">Configure Budget Tile</string>
+    <string name="tile_goal_label">Goal Tracker 1</string>
+    <string name="tile_goal_desc">Shows progress for the first configured savings goal.</string>
+    <string name="tile_goal2_label">Goal Tracker 2</string>
+    <string name="tile_goal2_desc">Shows progress for the second configured savings goal.</string>
+    <string name="tile_goal3_label">Goal Tracker 3</string>
+    <string name="tile_goal3_desc">Shows progress for the third configured savings goal.</string>
+    <string name="goal_tile_config_label">Configure Goal Tile</string>
 </resources>
