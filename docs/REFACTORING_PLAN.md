@@ -2,74 +2,101 @@
 
 ## Overview
 
-This document outlines the refactoring strategy for the Jmoney Wear OS application to address code smells, improve maintainability, and prepare for Phase 9 (Tiles) and Phase 10 (Complications) implementation.
+This document outlines the refactoring strategy for the Jmoney Wear OS application to address code smells, improve maintainability, and prepare for future improvements.
+
+## Current Codebase Stats
+
+### Project Overview
+- **Total Kotlin files**: 78
+- **Total lines of code**: ~7,655
+- **Module count**: 1 (monolithic `app` module)
+- **ProtoLayout version**: 1.4.1 (upgraded from 1.2.1)
+
+### Top 20 Largest Files
+
+| Lines | File | Description |
+|-------|------|-------------|
+| 563 | DashboardScreen.kt | Dashboard UI (was 966, reduced via refactoring) |
+| 314 | TransactionForm.kt | Transaction form composable |
+| 224 | GoalsScreen.kt | Goals screen UI |
+| 224 | NumericKeypad.kt | Custom numeric keypad |
+| 217 | BudgetsScreen.kt | Budgets screen UI |
+| 211 | Daos.kt | All Room DAO interfaces |
+| 207 | DashboardViewModel.kt | Dashboard business logic |
+| 188 | LoginScreen.kt | Login UI with auto-sign-in |
+| 173 | SettingsScreen.kt | Settings UI |
+| 165 | TransactionSync.kt | Transaction sync logic |
+| 155 | TileDataFetcher.kt | Tile data fetching |
+| 155 | GoalTile.kt | Goal tracker tile layout |
+| 154 | BudgetTile.kt | Budget tracker tile layout |
+| 144 | MainActivity.kt | Main activity |
+| 144 | SyncRepositoryImpl.kt | Sync orchestration (was 593, refactored) |
+| 125 | BudgetsViewModel.kt | Budgets logic |
+| 124 | BudgetTileConfigActivity.kt | Budget tile config |
+| 121 | GoalTileConfigActivity.kt | Goal tile config |
+| 111 | SupabaseDto.kt | Supabase DTOs |
 
 ## Current Issues
 
 ### Code Smells
 
-#### 1. Large Classes
-- **DashboardScreen.kt**: 966 lines
-  - Contains UI, transaction form logic, quick transactions overlay, category/payee selection
-  - Multiple responsibilities in one file
-  - Difficult to test and maintain
-
-- **SyncRepositoryImpl.kt**: 593 lines
-  - Contains sync logic for 7 different entities
-  - Push and pull logic mixed together
-  - Difficult to understand entity-specific sync behavior
+#### 1. Large Files (Still > 200 lines)
+- **DashboardScreen.kt**: 563 lines — significantly improved from 966, but still the largest file
+- **TransactionForm.kt**: 314 lines — extracted from DashboardScreen, could be split further
+- **GoalsScreen.kt**: 224 lines — moderate size
+- **NumericKeypad.kt**: 224 lines — keypad logic + UI combined
+- **BudgetsScreen.kt**: 217 lines — moderate size
+- **Daos.kt**: 211 lines — all 7 DAOs in one file
+- **DashboardViewModel.kt**: 207 lines — complex business logic
 
 #### 2. Duplicated Code Patterns
-- Card layouts duplicated across Dashboard, Budgets, Goals screens
-- Button styles repeated in multiple screens
-- Loading indicators duplicated
-- Similar state management patterns across ViewModels
+- Card layouts duplicated across Dashboard, Budgets, Goals screens (mostly resolved by common component library)
 
 #### 3. Embedded Logic
-- Transaction form logic embedded in DashboardScreen
-- Not reusable for other screens
-- Makes DashboardScreen even larger
+- Some screens still contain significant inline logic
 
-#### 4. Missing Reusable Components
-- No reusable UI component library
-- Cards, buttons, loading indicators duplicated
-- No consistent component API
+#### 4. Monolithic DAO File
+- All 7 DAO interfaces in one file (Daos.kt, 211 lines)
 
-#### 5. Missing Numeric Keypad
-- Uses RemoteInput (system keyboard) for amount entry
-- Not optimized for Wear OS
-- Poor UX on small screen
+### Resolved Issues (via Refactoring A-C)
+- ✅ DashboardScreen reduced from 966 → 563 lines
+- ✅ Transaction form extracted into reusable TransactionForm
+- ✅ Custom numeric keypad replacing RemoteInput
+- ✅ Category/Payee selectors extracted as reusable components
+- ✅ Reusable UI component library created (InfoCard, MetricCard, TransactionCard, ActionButton, LoadingIndicator, FullScreenOverlay)
+- ✅ SyncRepositoryImpl split into 7 entity-specific sync classes
+- ✅ SyncRepositoryImpl reduced from 593 → 144 lines
 
-#### 6. No WorkManager Integration
-- Sync only manual
-- No background sync
-- Data may become stale
+### Tile-Related Issues (Resolved)
+- ✅ Tile labels shortened for cleaner selector
+- ✅ Action tiles redesigned with alarm-widget-style pill buttons
+- ✅ Tile preview icons for all 16 services
+- ✅ ProtoLayout upgraded to 1.4.1
 
-#### 7. Limited Error Recovery
-- Some sync errors only logged
-- No retry mechanism
-- Poor error feedback to users
-
-#### 8. No Test Coverage
-- No unit tests
-- No integration tests
-- No UI tests
+### Remaining Issues
+- **No WorkManager Integration**: Sync only manual, no background sync, data may become stale
+- **Limited Error Recovery**: Some sync errors only logged, no retry mechanism
+- **No Test Coverage**: No unit tests, integration tests, or UI tests
+- **Monolithic Module**: Single app module, full rebuild on any change
+- **Custom button height in ProtoLayout**: Platform limitation — Chip default height is ~48dp
 
 ## Refactoring Priorities
 
-### ✅ Completed (Before Phase 9)
+### ✅ Completed
 1. ✅ Extract transaction form logic from DashboardScreen (Phase A)
 2. ✅ Create reusable UI component library (Phase B)
 3. ✅ Implement custom numeric keypad (Phase A - Step 5)
 4. ✅ Split SyncRepositoryImpl by entity (Phase C)
+5. ✅ Tile improvements (labels, design, previews)
+6. ✅ ProtoLayout upgrade (1.2.1 → 1.4.1)
 
-### Remaining (After Phase 10)
+### Remaining
 1. ⏳ Implement WorkManager for background sync (Phase D)
 2. ⏳ Improve error recovery (Phase E)
 3. ⏳ Add test coverage (Phase F)
 4. ⏳ Modularize into feature modules (Phase G)
 
-## Refactoring Plan - Remaining Phases
+## Refactoring Plan — Remaining Phases
 
 ### Phase D: Implement WorkManager for Background Sync
 
@@ -297,7 +324,7 @@ Restructure the project into feature-based modules for better scalability.
 
 #### Current State
 - Monolithic app module
-- All code in single module
+- All 78 Kotlin files in single module
 - Full rebuild on any change
 
 #### Target State
@@ -330,6 +357,7 @@ Restructure the project into feature-based modules for better scalability.
    - Create feature-settings module
    - Create feature-sync module
    - Create feature-quickadd module
+   - Create feature-tiles module
 
 5. **Update App Module**
    - Remove extracted code
@@ -354,12 +382,12 @@ Restructure the project into feature-based modules for better scalability.
 
 ## Refactoring Timeline
 
-### ✅ Completed (Before Phase 9)
-- **Phase A**: Extract Transaction Form Logic (2-3 days) ✅
-- **Phase B**: Create Reusable UI Component Library (2-3 days) ✅
-- **Phase C**: Split SyncRepositoryImpl by Entity (1-2 days) ✅
+### ✅ Completed
+- **Phase A**: Extract Transaction Form Logic ✅
+- **Phase B**: Create Reusable UI Component Library ✅
+- **Phase C**: Split SyncRepositoryImpl by Entity ✅
 
-### Remaining (After Phase 10)
+### Remaining
 - **Phase D**: Implement WorkManager for Background Sync (2-3 days)
 - **Phase E**: Improve Error Recovery (1-2 days)
 - **Phase F**: Add Test Coverage (5-7 days)
@@ -391,17 +419,19 @@ For each refactoring phase:
 
 ## Success Criteria
 
-### Code Quality (Achieved ✅)
-- ✅ DashboardScreen ~250 lines (below 500 target)
-- ✅ SyncRepositoryImpl ~150 lines (below 300 target)
+### Code Quality (Partially Achieved)
+- ✅ DashboardScreen ~563 lines (was 966, target < 500, improvement of 42%)
+- ✅ SyncRepositoryImpl ~144 lines (was 593, target < 300, improvement of 76%)
 - ⏳ No code duplication > 10 lines
 - ✅ All functions < 50 lines
+- ✅ Reusable UI component library created
+- ✅ Reusable tile layout helper (ActionTileLayout)
 
 ### Maintainability
-- Clear module boundaries
-- Consistent coding style
-- Comprehensive documentation
-- Easy to add new features
+- Clear module boundaries (future goal)
+- Consistent coding style (achieved)
+- Comprehensive documentation (achieved)
+- Easy to add new features (achieved)
 
 ### Performance
 - No performance regression
@@ -409,9 +439,9 @@ For each refactoring phase:
 - Better battery efficiency (after WorkManager)
 
 ### Testing
-- > 80% code coverage
-- All critical paths tested
-- No flaky tests
+- > 80% code coverage (future goal)
+- All critical paths tested (future goal)
+- No flaky tests (future goal)
 
 ## Conclusion
 
@@ -420,5 +450,6 @@ Refactoring Phases A-C are complete. The codebase is now cleaner with:
 - Custom numeric keypad replacing RemoteInput
 - Reusable UI component library created
 - Sync logic split into 7 entity-specific classes
+- Tile system implemented with 16 service instances
 
-The remaining phases (D-G) should be addressed after Phase 10 (Complications) to further improve the application.
+The remaining phases (D-G) should be addressed to further improve the application's maintainability, reliability, and test coverage.

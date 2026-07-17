@@ -16,8 +16,8 @@ This document tracks the implementation status of Jmoney Wear OS across all deve
 | Phase 6 | Budgets | ✅ Complete | - |
 | Phase 7 | Goals | ✅ Complete | - |
 | Phase 8 | Settings | ✅ Complete | - |
-| Phase 9 | Tiles | ⏳ Pending | - |
-| Phase 10 | Complications | ⏳ Pending | - |
+| Phase 9 | Tiles | ✅ Complete | - |
+| Phase 10 | Complications | ❌ Discarded | - |
 | Refactoring A | Extract Transaction Form Logic | ✅ Complete | - |
 | Refactoring B | Reusable UI Components | ✅ Complete | - |
 | Refactoring C | Split SyncRepositoryImpl | ✅ Complete | - |
@@ -259,7 +259,7 @@ Build the main dashboard with financial summary and transaction entry.
 - ✅ Sync refresh button with timestamp
 
 ### Key Implementations
-- **Dashboard Screen**: `presentation/dashboard/DashboardScreen.kt` (now ~250 lines after refactoring)
+- **Dashboard Screen**: `presentation/dashboard/DashboardScreen.kt`
   - Financial summary cards (using MetricCard)
   - Quick action buttons (using ActionButton)
   - Recent transactions list (using TransactionCard)
@@ -390,60 +390,94 @@ Build the settings screen with app configuration options.
 
 ---
 
-## Phase 9: Tiles ⏳
+## Phase 9: Tiles ✅
 
 ### Objective
 Build 10 Wear OS tiles for quick access to financial information and actions.
 
-### Planned Tiles
-1. Remaining For Period
-2. Upcoming Pay Day
-3. Quick Add Expense
-4. Quick Add Income
-5. Quick Transaction
-6. Monthly Expense
-7. Monthly Income
-8. Net Worth
-9. Budget Tile (configurable)
-10. Goal Tile (configurable)
+### Implemented Tiles
+1. ✅ **Remaining For Period** - Displays remaining budget or overspent amount for current period
+2. ✅ **Upcoming Pay Day** - Shows countdown to next pay day
+3. ✅ **Add Expense** - Quick access to log a new expense (alarm-widget style pill button)
+4. ✅ **Add Income** - Quick access to log a new income (alarm-widget style pill button)
+5. ✅ **Quick Add** - Quick access to transaction presets (alarm-widget style pill button)
+6. ✅ **Monthly Expense** - Shows total expenses for the current month
+7. ✅ **Monthly Income** - Shows total income for the current month
+8. ✅ **Net Worth** - Shows current net worth (total income minus total expense)
+9. ✅ **Budget 1-4** (configurable) - Shows spending and progress for a configured budget category (4 instances)
+10. ✅ **Goal 1-3** (configurable) - Shows progress for a configured savings goal (3 instances)
+11. ✅ **Quick Actions** - Combined tile with expense, income, and quick transaction buttons
+
+### Key Implementations
+
+#### Tile Services (16 total)
+- `RemainingForPeriodTileService` - Remaining for period tile
+- `UpcomingPayDayTileService` - Pay day countdown tile
+- `QuickAddExpenseTileService` - Add expense action tile
+- `QuickAddIncomeTileService` - Add income action tile
+- `QuickTransactionTileService` - Quick add transaction presets tile
+- `QuickActionsTileService` - Combined quick actions tile
+- `MonthlyExpenseTileService` - Monthly expense tile
+- `MonthlyIncomeTileService` - Monthly income tile
+- `NetWorthTileService` - Net worth tile
+- `BudgetTileService` / `BudgetTileService2-4` - Configurable budget trackers
+- `GoalTileService` / `GoalTileService2-3` - Configurable goal trackers
+
+#### Tile Layouts
+- `ActionTileLayout.kt` - Reusable helper for alarm-widget-style action tiles (pill-shaped Chip with 89% width, TITLE2 typography title, built-in press feedback)
+- `RemainingForPeriodTile.kt` - PrimaryLayout with large amount display
+- `UpcomingPayDayTile.kt` - Pay day countdown layout
+- `QuickAddExpenseTile.kt` - Uses ActionTileLayout (heading: "Expense", button: "Add", color: #FF453A)
+- `QuickAddIncomeTile.kt` - Uses ActionTileLayout (heading: "Income", button: "Add", color: #2ECC71)
+- `QuickTransactionTile.kt` - Uses ActionTileLayout (heading: "Quick Add", button: "Presets", color: #2F80ED)
+- `QuickActionsTile.kt` - Row of 3 circular action buttons
+- `MonthlyExpenseTile.kt` - EdgeContentLayout with circular progress
+- `MonthlyIncomeTile.kt` - EdgeContentLayout with circular progress
+- `NetWorthTile.kt` - EdgeContentLayout with circular progress
+- `BudgetTile.kt` - EdgeContentLayout with circular progress indicator and Chip for unconfigured state
+- `GoalTile.kt` - EdgeContentLayout with circular progress indicator and Chip for unconfigured state
+
+#### UI Improvements (Tile Redesign)
+- **Title Changes**: Shortened all tile labels (e.g., "Budget Tracker 1" → "Budget 1", "Quick Add Expense" → "Add Expense")
+- **Action Tile Redesign**: Extracted reusable `ActionTileLayout` with Material pill-shaped Chip, proper brand colors, and 89% width
+- **Preview Icons**: 11 PNG preview images added as drawable resources with `androidx.wear.tiles.PREVIEW` metadata in manifest
+- **ProtoLayout Upgrade**: `wear-protolayout` upgraded from 1.2.1 → 1.4.1
+
+#### Configuration Activities
+- `BudgetTileConfigActivity` - Budget selection for configurable tiles
+- `GoalTileConfigActivity` - Goal selection for configurable tiles
+
+### Files Created/Modified
+- `presentation/tiles/tiles/ActionTileLayout.kt` (new)
+- All tile layout files in `presentation/tiles/tiles/`
+- All tile service files in `presentation/tiles/`
+- `AndroidManifest.xml` (tile service declarations + preview metadata)
+- `strings.xml` (shortened tile labels)
+- 11 drawable preview PNGs in `res/drawable/`
+- `gradle/libs.versions.toml` (ProtoLayout 1.2.1 → 1.4.1)
 
 ### Status
-**NOT STARTED** - Implementation planned for Phase 9.
-
-### Implementation Plan
-See `PHASE9_IMPLEMENTATION_PLAN.md` for detailed implementation plan.
+**COMPLETE** - All 10 tile types implemented (16 total tile service instances), including configurable budget and goal tiles with configuration activities. Action tiles redesigned with alarm-widget-style pill buttons.
 
 ---
 
-## Phase 10: Complications ⏳
+## Phase 10: Complications ❌
 
 ### Objective
-Build 6 Wear OS complications for watch face integration.
-
-### Planned Complications
-1. Pay Day Countdown
-2. Quick Add Expense
-3. Quick Add Income
-4. Quick Transaction
-5. Remaining Balance
-6. Net Worth
+Build 6 Wear OS complications for watch face integration was originally planned.
 
 ### Status
-**NOT STARTED** - Implementation planned for Phase 10.
-
-### Implementation Plan
-See `PHASE10_IMPLEMENTATION_PLAN.md` for detailed implementation plan.
+**DISCARDED** - Phase 10 (Complications) has been removed from the roadmap. The project will focus on other improvements instead.
 
 ---
 
 ## Overall Project Status
 
 ### Completion Percentage
-- **Phases 1-8**: 100% complete
+- **Phases 1-9**: 100% complete
 - **Refactoring A-C**: 100% complete
-- **Phase 9**: 0% complete
-- **Phase 10**: 0% complete
-- **Overall**: 80% complete
+- **Phase 10**: Discarded
+- **Overall**: 90% complete
 
 ### Current State
 The application is fully functional as a standalone Wear OS finance app with:
@@ -453,24 +487,27 @@ The application is fully functional as a standalone Wear OS finance app with:
 - Budgets tracking
 - Goals tracking
 - Settings management
+- 16 Wear OS tile instances (10 unique tile types)
 
 ### Next Steps
-1. Implement Phase 9 (Tiles)
-2. Implement Phase 10 (Complications)
-3. Further refactoring (Phases D-H)
-4. Testing and polish
-5. Play Store release
+1. Refactoring (WorkManager, error recovery, testing, modularization)
+2. Testing and polish
+3. Play Store release
 
 ## Known Issues
 
-### Resolved (via Refactoring)
-- ✅ DashboardScreen reduced from 966 to ~250 lines
+### Resolved (via Refactoring and Tile Improvements)
+- ✅ DashboardScreen reduced from 966 to ~563 lines
 - ✅ Transaction form extracted into reusable TransactionForm component
 - ✅ Custom numeric keypad replacing RemoteInput
 - ✅ Category/Payee selectors extracted as reusable components
 - ✅ Reusable UI component library created (InfoCard, MetricCard, TransactionCard, ActionButton, LoadingIndicator, FullScreenOverlay)
 - ✅ SyncRepositoryImpl split into 7 entity-specific sync classes
-- ✅ SyncRepositoryImpl reduced from 593 to ~150 lines
+- ✅ SyncRepositoryImpl reduced from 593 to ~144 lines
+- ✅ Tile labels shortened for cleaner tile selector
+- ✅ Action tiles redesigned with alarm-widget-style pill buttons
+- ✅ Tile preview icons added for all 16 tile services
+- ✅ ProtoLayout upgraded to 1.4.1
 
 ### Remaining
 - Daily limit calculation (exists in React Native, not in Wear OS)
@@ -478,6 +515,7 @@ The application is fully functional as a standalone Wear OS finance app with:
 - Unit tests
 - Integration tests
 - Analytics and crash reporting
+- Custom button height in ProtoLayout (platform limitation — Chip default height is ~48dp)
 
 ### Performance
 - No performance optimizations implemented
@@ -493,6 +531,7 @@ The application is fully functional as a standalone Wear OS finance app with:
 - ✅ Budgets functionality tested
 - ✅ Goals functionality tested
 - ✅ Settings functionality tested
+- ⏳ Tiles testing in progress
 
 ### Automated Testing
 - ❌ No unit tests
@@ -520,8 +559,8 @@ The application is fully functional as a standalone Wear OS finance app with:
 - ✅ MODULE_STRUCTURE.md - Package structure and organization
 - ✅ IMPLEMENTATION_STATUS.md - This document
 - ✅ REFACTORING_PLAN.md - Modularization strategy
-- ✅ PHASE9_IMPLEMENTATION_PLAN.md - Tiles implementation plan
-- ✅ PHASE10_IMPLEMENTATION_PLAN.md - Complications implementation plan
+- ❌ ~~PHASE9_IMPLEMENTATION_PLAN.md~~ (deleted — phase complete)
+- ❌ ~~PHASE10_IMPLEMENTATION_PLAN.md~~ (deleted — phase discarded)
 
 ### User Documentation
 - ❌ No user guide
@@ -546,4 +585,4 @@ The application is fully functional as a standalone Wear OS finance app with:
 
 ## Summary
 
-Phases 1-8 are complete and the application is fully functional as a standalone Wear OS finance app. Refactoring Phases A-C (Transaction Form Extraction, Reusable UI Components, Sync Split) are also complete. The codebase is now cleaner and more maintainable. The next phases (Tiles and Complications) will extend the app's functionality with Wear OS-specific features for quick access and watch face integration.
+Phases 1-9 are complete and the application is fully functional as a standalone Wear OS finance app. Refactoring Phases A-C (Transaction Form Extraction, Reusable UI Components, Sync Split) are also complete. The tile system provides 16 Wear OS tile instances (10 unique types) with glanceable financial data, quick actions, configurable budget/goal tracking, and alarm-widget-style pill buttons. Phase 10 (Complications) has been discarded from the roadmap.

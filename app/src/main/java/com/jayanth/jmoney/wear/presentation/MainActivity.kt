@@ -51,16 +51,34 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var syncRepository: SyncRepository
 
+    private val actionState = androidx.compose.runtime.mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        actionState.value = intent?.getStringExtra("action")
         setContent {
-            WearApp(loginViewModel, syncRepository)
+            WearApp(
+                loginViewModel = loginViewModel,
+                syncRepository = syncRepository,
+                initialAction = actionState.value,
+                onConsumeAction = { actionState.value = null }
+            )
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        actionState.value = intent.getStringExtra("action")
     }
 }
 
 @Composable
-fun WearApp(loginViewModel: LoginViewModel, syncRepository: SyncRepository) {
+fun WearApp(
+    loginViewModel: LoginViewModel,
+    syncRepository: SyncRepository,
+    initialAction: String?,
+    onConsumeAction: () -> Unit
+) {
     JmoneyTheme {
         val authState by loginViewModel.authState.collectAsState()
         var hasSynced by remember { mutableStateOf(true) } // Default to true while loading
@@ -95,7 +113,10 @@ fun WearApp(loginViewModel: LoginViewModel, syncRepository: SyncRepository) {
                         modifier = Modifier.fillMaxSize()
                     ) { page ->
                         when (page) {
-                            0 -> DashboardScreen()
+                            0 -> DashboardScreen(
+                                initialAction = initialAction,
+                                onConsumeAction = onConsumeAction
+                            )
                             1 -> BudgetsScreen()
                             2 -> GoalsScreen()
                             3 -> SettingsScreen()

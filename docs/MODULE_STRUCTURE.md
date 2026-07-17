@@ -19,7 +19,7 @@ com.jayanth.jmoney.wear/
 │   │   ├── AuthRepository.kt             # Auth interface
 │   │   ├── AuthRepositoryImpl.kt         # Auth implementation
 │   │   ├── SyncRepository.kt             # Sync interface
-│   │   └── SyncRepositoryImpl.kt         # Sync implementation (refactored, ~150 lines)
+│   │   └── SyncRepositoryImpl.kt         # Sync implementation (refactored, ~144 lines)
 │   ├── sync/                             # Entity-specific sync classes
 │   │   ├── TransactionSync.kt            # Transaction sync logic
 │   │   ├── CategorySync.kt               # Category sync logic
@@ -70,11 +70,68 @@ com.jayanth.jmoney.wear/
     ├── sync/                             # Sync feature
     │   ├── SyncScreen.kt
     │   └── SyncViewModel.kt
+    ├── tiles/                            # Tiles feature (Phase 9 — complete)
+    │   ├── RemainingForPeriodTileService.kt # Remaining for period tile service
+    │   ├── UpcomingPayDayTileService.kt  # Upcoming pay day tile service
+    │   ├── QuickAddExpenseTileService.kt # Quick add expense tile service
+    │   ├── QuickAddIncomeTileService.kt  # Quick add income tile service
+    │   ├── QuickTransactionTileService.kt # Quick transaction tile service
+    │   ├── QuickActionsTileService.kt    # Quick actions combination tile service
+    │   ├── MonthlyExpenseTileService.kt  # Monthly expense tile service
+    │   ├── MonthlyIncomeTileService.kt   # Monthly income tile service
+    │   ├── NetWorthTileService.kt        # Net worth tile service
+    │   ├── BudgetTileService.kt           # Budget tile service (configurable)
+    │   ├── BudgetTileService2.kt          # Budget tile service 2 (configurable)
+    │   ├── BudgetTileService3.kt          # Budget tile service 3 (configurable)
+    │   ├── BudgetTileService4.kt          # Budget tile service 4 (configurable)
+    │   ├── GoalTileService.kt             # Goal tile service (configurable)
+    │   ├── GoalTileService2.kt            # Goal tile service 2 (configurable)
+    │   ├── GoalTileService3.kt            # Goal tile service 3 (configurable)
+    │   ├── configuration/
+    │   │   ├── BudgetTileConfigActivity.kt # Budget configuration activity
+    │   │   └── GoalTileConfigActivity.kt   # Goal configuration activity
+    │   ├── tiles/
+    │   │   ├── ActionTileLayout.kt        # Reusable alarm-widget-style action tile helper
+    │   │   ├── RemainingForPeriodTile.kt  # Remaining for period tile layout
+    │   │   ├── UpcomingPayDayTile.kt      # Upcoming pay day tile layout
+    │   │   ├── QuickAddExpenseTile.kt     # Quick add expense tile layout (uses ActionTileLayout)
+    │   │   ├── QuickAddIncomeTile.kt      # Quick add income tile layout (uses ActionTileLayout)
+    │   │   ├── QuickTransactionTile.kt    # Quick transaction tile layout (uses ActionTileLayout)
+    │   │   ├── QuickActionsTile.kt        # Quick actions combination tile layout
+    │   │   ├── MonthlyExpenseTile.kt      # Monthly expense tile layout
+    │   │   ├── MonthlyIncomeTile.kt       # Monthly income tile layout
+    │   │   ├── NetWorthTile.kt            # Net worth tile layout
+    │   │   ├── BudgetTile.kt              # Budget tracker tile layout
+    │   │   └── GoalTile.kt                # Goal tracker tile layout
+    │   └── utils/
+    │       ├── TileDataFetcher.kt         # Data fetcher for tiles
+    │       └── TileResourceBuilder.kt     # Resource builder for tiles
     ├── theme/                            # Theme configuration
     │   ├── Color.kt
     │   └── Theme.kt
     └── utils/                            # Utilities
         └── Formatters.kt
+```
+
+### Additional Resources
+
+```
+app/src/main/res/
+└── drawable/
+    ├── ic_launcher_foreground.xml        # App launcher foreground
+    ├── ic_launcher_background.xml        # App launcher background
+    ├── splash_icon.xml                   # Splash screen icon
+    ├── tile_preview_add_expense.png      # Add Expense tile preview
+    ├── tile_preview_add_income.png       # Add Income tile preview
+    ├── tile_preview_quick_transaction.png # Quick Add tile preview
+    ├── tile_preview_quick_actions.png    # Quick Actions tile preview
+    ├── tile_preview_monthly_expense.png  # Expense tile preview
+    ├── tile_preview_monthly_income.png   # Income tile preview
+    ├── tile_preview_net_worth.png        # Net Worth tile preview
+    ├── tile_preview_remaining.png        # Remaining tile preview
+    ├── tile_preview_upcoming_pay_day.png # Pay Day tile preview
+    ├── tile_preview_budgets.png          # Budget tiles (1-4) preview (shared)
+    └── tile_preview_goals.png            # Goal tiles (1-3) preview (shared)
 ```
 
 ## Package Responsibilities
@@ -128,7 +185,7 @@ com.jayanth.jmoney.wear/
   - resetLocalData(): Clear local data
   - hasSyncedBefore(): Check sync history
   - getLastSyncTimestamp(): Get last sync time
-- **SyncRepositoryImpl.kt**: Supabase sync implementation (593 lines)
+- **SyncRepositoryImpl.kt**: Supabase sync implementation (~144 lines, refactored)
 
 #### Storage (`data/storage/`)
 - **SecureStorage.kt**: Encrypted storage for session tokens
@@ -183,7 +240,7 @@ com.jayanth.jmoney.wear/
   - Manages sync state
 
 #### Dashboard Feature (`presentation/dashboard/`)
-- **DashboardScreen.kt**: Dashboard UI composable (966 lines)
+- **DashboardScreen.kt**: Dashboard UI composable
   - Financial summary cards
   - Quick action buttons
   - Recent transactions
@@ -224,6 +281,16 @@ com.jayanth.jmoney.wear/
   - Triggers full sync
   - Reports progress
   - Handles completion
+
+#### Tiles Feature (`presentation/tiles/`) — Phase 9 Complete
+- **16 Tile Services**: Individual TileService instances for each tile, registered in AndroidManifest.xml with preview metadata
+- **2 Configuration Activities**: `BudgetTileConfigActivity` and `GoalTileConfigActivity` for configurable tiles
+- **12 Tile Layout Builders**: Individual layout builder classes
+  - `ActionTileLayout.kt` — Reusable helper for alarm-widget-style action tiles with pill-shaped Chip, proper brand colors, and Material press feedback
+  - Other layout files for remaining/upcoming/expense/income/quick/monthly/networth/budget/goal tiles
+- **2 Utility Classes**: `TileDataFetcher` (data fetching, 155 lines) and `TileResourceBuilder` (resource building)
+- **Tile Preview Images**: 11 PNG drawable resources for the tile selector previews
+- **ProtoLayout**: Uses `wear-protolayout` 1.4.1 (upgraded from 1.2.1)
 
 #### Theme (`presentation/theme/`)
 - **Color.kt**: Color definitions
@@ -327,8 +394,9 @@ feature-quickadd/                       # Quick add feature
 └── di/
     └── QuickAddModule.kt
 
-feature-tiles/                          # Tiles feature (Phase 9)
+feature-tiles/                          # Tiles feature (Phase 9 — complete)
 ├── tiles/
+│   ├── ActionTileLayout.kt             # Reusable action tile helper
 │   ├── RemainingForPeriodTile.kt
 │   ├── UpcomingPayDayTile.kt
 │   ├── QuickAddExpenseTile.kt
@@ -341,17 +409,6 @@ feature-tiles/                          # Tiles feature (Phase 9)
 │   └── GoalTile.kt
 └── di/
     └── TilesModule.kt
-
-feature-complications/                   # Complications feature (Phase 10)
-├── complications/
-│   ├── PayDayCountdownComplication.kt
-│   ├── QuickAddExpenseComplication.kt
-│   ├── QuickAddIncomeComplication.kt
-│   ├── QuickTransactionComplication.kt
-│   ├── RemainingBalanceComplication.kt
-│   └── NetWorthComplication.kt
-└── di/
-    └── ComplicationsModule.kt
 ```
 
 ## Module Dependencies
@@ -466,7 +523,7 @@ feature-complications/                   # Complications feature (Phase 10)
 3. Update app to aggregate feature modules
 
 ### Phase 5: Add New Features
-1. Create feature modules for tiles and complications
+1. Create feature modules for tiles
 2. Implement features in isolated modules
 3. Integrate with app module
 
@@ -519,6 +576,12 @@ Feature modules would have minimal AndroidManifest.xml:
 </manifest>
 ```
 
+## Dependencies & Versions
+
+### Key Version Updates
+- **wear-protolayout**: 1.4.1 (upgraded from 1.2.1)
+- **wear-tiles**: 1.4.1
+
 ## Conclusion
 
-The current package structure is suitable for the current scope (Phase 1-8). As the project grows with Tiles (Phase 9) and Complications (Phase 10), migrating to a modular structure will provide better organization, faster builds, and improved maintainability. The proposed modular structure follows Android best practices and scales well for larger applications.
+The current package structure is suitable for the current scope (Phase 1-9). The tile system is fully implemented with 16 tile service instances, 12 layout builders, configuration activities, and preview images. Migrating to a modular structure will provide better organization, faster builds, and improved maintainability as the project grows.
