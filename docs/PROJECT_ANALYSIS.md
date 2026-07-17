@@ -200,6 +200,11 @@ The Room database contains 7 entities matching the React Native app schema:
 - Sync status display
 - Swipe navigation from Dashboard
 
+### Phase 9: Tiles (In Progress)
+- Implemented Tile infrastructure including `TileDataFetcher` and `TileResourceBuilder`
+- Implemented Tile 1: **Remaining For Period Tile** layout and logic using Protolayout and Hilt
+- Registered `JmoneyTileService` in `AndroidManifest.xml`
+
 ## Business Logic Comparison with React Native
 
 ### Dashboard Calculations

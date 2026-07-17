@@ -91,6 +91,14 @@ dependencies {
     implementation(libs.ui.tooling.preview)
     implementation(libs.wear.tooling.preview)
 
+    // Wear Tiles
+    implementation(libs.wear.tiles)
+    implementation(libs.wear.tiles.tooling)
+    implementation(libs.wear.protolayout)
+    implementation(libs.wear.protolayout.expression)
+    implementation(libs.wear.protolayout.material)
+    implementation(libs.concurrent.futures)
+
     // Lifecycle ViewModel
     implementation(libs.lifecycle.viewmodel.compose)
 

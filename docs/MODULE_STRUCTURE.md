@@ -70,6 +70,13 @@ com.jayanth.jmoney.wear/
     ├── sync/                             # Sync feature
     │   ├── SyncScreen.kt
     │   └── SyncViewModel.kt
+    ├── tiles/                            # Tiles feature (Phase 9)
+    │   ├── JmoneyTileService.kt          # Tile service
+    │   ├── tiles/
+    │   │   └── RemainingForPeriodTile.kt # Remaining for period tile layout
+    │   └── utils/
+    │       ├── TileDataFetcher.kt        # Data fetcher for tiles
+    │       └── TileResourceBuilder.kt    # Resource builder for tiles
     ├── theme/                            # Theme configuration
     │   ├── Color.kt
     │   └── Theme.kt

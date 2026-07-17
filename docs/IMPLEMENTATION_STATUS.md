@@ -16,7 +16,7 @@ This document tracks the implementation status of Jmoney Wear OS across all deve
 | Phase 6 | Budgets | ✅ Complete | - |
 | Phase 7 | Goals | ✅ Complete | - |
 | Phase 8 | Settings | ✅ Complete | - |
-| Phase 9 | Tiles | ⏳ Pending | - |
+| Phase 9 | Tiles | 🚧 In Progress | - |
 | Phase 10 | Complications | ⏳ Pending | - |
 | Refactoring A | Extract Transaction Form Logic | ✅ Complete | - |
 | Refactoring B | Reusable UI Components | ✅ Complete | - |

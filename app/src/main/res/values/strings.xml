@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">Jmoney</string>
     <string name="hello_world">Hello, %1$s!</string>
+    <string name="tile_service_label">Jmoney</string>
+    <string name="tile_service_description">Shows your Jmoney financial status at a glance.</string>
 </resources>
