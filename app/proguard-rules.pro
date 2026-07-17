@@ -11,3 +11,6 @@
     *** Companion;
     *** $serializer;
 }
+
+# Suppress R8 warning for missing Guava/J2ObjC dependency
+-dontwarn com.google.j2objc.annotations.RetainedWith
