@@ -23,7 +23,8 @@ class QuickActionsTile {
         ): LayoutElementBuilders.LayoutElement {
             val expenseColors = Colors(0xFFF44336.toInt(), 0xFFFFFFFF.toInt(), 0, 0)
             val incomeColors = Colors(0xFF4CAF50.toInt(), 0xFFFFFFFF.toInt(), 0, 0)
-            val quickColors = Colors(0xFFFFC107.toInt(), 0xFF000000.toInt(), 0, 0)
+            // Fixed: deeper amber with white icon for better contrast on watch display
+            val quickColors = Colors(0xFFFF9800.toInt(), 0xFFFFFFFF.toInt(), 0, 0)
 
             val expenseClickable = ModifiersBuilders.Clickable.Builder()
                 .setId("add_expense_clickable")

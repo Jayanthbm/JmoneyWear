@@ -2,7 +2,7 @@
 
 ## Overview
 
-Jmoney Wear OS is a personal finance application built for Wear OS smartwatches. It is an independent companion to the React Native Jmoney mobile application, communicating directly with Supabase for authentication and data synchronization. The app follows a clean architecture pattern with MVVM, Hilt dependency injection, Room database, and Jetpack Compose for Wear OS UI.
+Jmoney Wear OS is a personal finance application built for Wear OS smartwatches. It is an independent companion to the React Native Jmoney mobile application, communicating directly with Supabase for authentication and data synchronization. The app follows a clean architecture pattern with MVVM, Hilt dependency injection, Room database, and Jetpack Compose for Wear OS UI. The tile system uses ProtoLayout for 16 Wear OS tile instances providing glanceable financial data.
 
 ## Project Structure
 
@@ -21,7 +21,7 @@ app/src/main/java/com/jayanth/jmoney/wear/
 │   │   ├── AuthRepository.kt             # Authentication repository interface
 │   │   ├── AuthRepositoryImpl.kt         # Authentication implementation
 │   │   ├── SyncRepository.kt             # Sync repository interface
-│   │   └── SyncRepositoryImpl.kt         # Sync implementation (~150 lines, refactored)
+│   │   └── SyncRepositoryImpl.kt         # Sync implementation (~144 lines, refactored)
 │   ├── sync/                             # Entity-specific sync classes
 │   │   ├── TransactionSync.kt            # Transaction sync logic
 │   │   ├── CategorySync.kt               # Category sync logic
@@ -56,7 +56,7 @@ app/src/main/java/com/jayanth/jmoney/wear/
     │   └── overlays/
     │       └── FullScreenOverlay.kt      # Full screen overlay
     ├── dashboard/
-    │   ├── DashboardScreen.kt            # Dashboard UI (~250 lines, refactored)
+    │   ├── DashboardScreen.kt            # Dashboard UI
     │   └── DashboardViewModel.kt         # Dashboard logic
     ├── form/                             # Transaction form components
     │   ├── CategorySelector.kt           # Category selection overlay
@@ -72,6 +72,17 @@ app/src/main/java/com/jayanth/jmoney/wear/
     ├── sync/
     │   ├── SyncScreen.kt                 # Sync progress UI
     │   └── SyncViewModel.kt              # Sync progress logic
+    ├── tiles/                            # Tiles feature (Phase 9 — complete)
+    │   ├── ... (16 tile services)
+    │   ├── configuration/
+    │   │   ├── BudgetTileConfigActivity.kt
+    │   │   └── GoalTileConfigActivity.kt
+    │   ├── tiles/
+    │   │   ├── ActionTileLayout.kt       # Reusable action tile helper
+    │   │   └── ... (11 layout builders)
+    │   └── utils/
+    │       ├── TileDataFetcher.kt        # Data fetcher for tiles
+    │       └── TileResourceBuilder.kt    # Resource builder for tiles
     ├── theme/
     │   ├── Color.kt                      # Color definitions
     │   └── Theme.kt                      # Material 3 theme
@@ -92,12 +103,15 @@ app/src/main/java/com/jayanth/jmoney/wear/
 - **Flow**: Reactive data streams
 - **WorkManager**: Background task scheduling
 - **Supabase Kotlin SDK**: Backend integration
+- **ProtoLayout 1.4.1**: Wear OS tile layout framework
 
 ### Key Dependencies
 - `androidx.compose.*`: Compose UI libraries
 - `androidx.hilt.*`: Hilt DI
 - `androidx.room.*`: Room database
 - `androidx.work.*`: WorkManager
+- `androidx.wear.protolayout:*`: ProtoLayout for tiles
+- `androidx.wear.tiles:*`: Wear OS tiles framework
 - `io.github.jan.supabase.*`: Supabase SDK
 - `io.ktor:*`: HTTP client for Supabase
 - `androidx.wear.input`: RemoteInput for Wear OS
@@ -136,7 +150,7 @@ The Room database contains 7 entities matching the React Native app schema:
 - Stores transaction groups
 - Fields: id, name, description, userId, priority, syncStatus
 
-## Features Implemented (Phase 1-8)
+## Features Implemented (Phase 1-9)
 
 ### Phase 1: Analysis Complete
 - Analyzed React Native reference project
@@ -200,19 +214,33 @@ The Room database contains 7 entities matching the React Native app schema:
 - Sync status display
 - Swipe navigation from Dashboard
 
-### Phase 9: Tiles (In Progress)
-- Implemented Tile infrastructure including `TileDataFetcher` and `TileResourceBuilder`
-- Implemented Tile 1: **Remaining For Period Tile** layout and logic using Protolayout and Hilt
-- Implemented Tile 2: **Upcoming Pay Day Tile** layout and logic using Protolayout
-- Implemented Tile 3: **Quick Add Expense Tile** layout and logic using Protolayout (launches MainActivity with action extra)
-- Implemented Tile 4: **Quick Add Income Tile** layout and logic using Protolayout (launches MainActivity with action extra)
-- Implemented Tile 5: **Quick Transaction Tile** layout and logic using Protolayout (launches MainActivity with action extra)
-- Implemented Tile 11 (combined): **Quick Actions Tile** layout (combined side-by-side row of Expense, Income, and Quick Transaction actions)
-- Implemented Tile 6: **Monthly Expense Tile** layout (shows current month and total monthly expenses using Protolayout)
-- Implemented Tile 7: **Monthly Income Tile** layout (shows current month and total monthly income using Protolayout)
-- Implemented Tile 8: **Net Worth Tile** layout (shows overall net worth using Protolayout)
-- Implemented Tile 9 (configurable): **Budget Tracker Tile** layout and configuration activity `BudgetTileConfigActivity` (lets users configure which budget to display via the watch interface, showing progress circle, spent/limit, and daily budget advice)
-- Registered `RemainingForPeriodTileService`, `UpcomingPayDayTileService`, `QuickAddExpenseTileService`, `QuickAddIncomeTileService`, `QuickTransactionTileService`, `QuickActionsTileService`, `MonthlyExpenseTileService`, `MonthlyIncomeTileService`, `NetWorthTileService`, and `BudgetTileService` in `AndroidManifest.xml`
+### Phase 9: Tiles Complete
+- **16 Tile Service instances** registered in AndroidManifest.xml with preview metadata
+- **12 Tile Layout builders** for 10 unique tile types
+- **11 drawable preview images** for distinct tile selector icons
+- **2 Configuration activities** for configurable tiles (Budget & Goal)
+- **ActionTileLayout** reusable helper for alarm-widget-style action tiles (pill-shaped Chip with brand colors and Material press feedback)
+- **ProtoLayout upgraded** from 1.2.1 to 1.4.1
+- **Tile labels shortened** for cleaner tile selector UX
+- **Action tiles redesigned** with clean heading + prominent pill button
+
+#### Tile Types:
+| # | Type | Instance Count | Configurable | Status |
+|---|------|---------------|--------------|--------|
+| 1 | Remaining For Period | 1 | No | ✅ |
+| 2 | Upcoming Pay Day | 1 | No | ✅ |
+| 3 | Monthly Expense | 1 | No | ✅ |
+| 4 | Monthly Income | 1 | No | ✅ |
+| 5 | Net Worth | 1 | No | ✅ |
+| 6 | Add Expense (action) | 1 | No | ✅ |
+| 7 | Add Income (action) | 1 | No | ✅ |
+| 8 | Quick Add (action) | 1 | No | ✅ |
+| 9 | Quick Actions (combined) | 1 | No | ✅ |
+| 10 | Budget Tracker | 4 | Yes | ✅ |
+| 11 | Goal Tracker | 3 | Yes | ✅ |
+
+### Phase 10: Complications (Discarded)
+Phase 10 (Complications) has been removed from the project roadmap.
 
 ## Business Logic Comparison with React Native
 
@@ -270,6 +298,13 @@ The Room database contains 7 entities matching the React Native app schema:
 4. Emits DashboardState
 5. UI observes state and recomposes on changes
 
+### Tile Data Flow
+1. TileService receives TileRequest
+2. Creates DeviceParameters from request
+3. Calls TileDataFetcher (Hilt-injected) for data
+4. Builds layout using ProtoLayout builders
+5. Returns Tile with timeline layout
+
 ## Key Design Decisions
 
 ### Architecture
@@ -297,6 +332,7 @@ The Room database contains 7 entities matching the React Native app schema:
 - **RemoteInput for Text Entry**: System keyboard for amount/description input
 - **Overlay-based Forms**: Transaction form as full-screen overlay
 - **Color-coded Cards**: Visual feedback for overspending, income vs expense
+- **ProtoLayout for Tiles**: 16 tile instances with 10 unique types
 
 ### Performance
 - **Flow-based Reactivity**: UI updates automatically on data changes
@@ -314,19 +350,25 @@ The Room database contains 7 entities matching the React Native app schema:
 - Comprehensive error handling in sync
 - Consistent naming conventions
 - Material 3 design system usage
+- Reusable tile layout component (ActionTileLayout)
 
-### Areas for Improvement (Resolved by Refactoring A-C)
-- ✅ **DashboardScreen**: Reduced from 966 to ~250 lines via extraction
+### Areas for Improvement (Resolved by Refactoring A-C and Tiles)
+- ✅ **DashboardScreen**: Reduced from 966 to ~563 lines via extraction
 - ✅ **Transaction form logic**: Extracted into reusable TransactionForm composable
-- ✅ **SyncRepositoryImpl**: Reduced from 593 to ~150 lines, split into 7 entity-specific sync classes
+- ✅ **SyncRepositoryImpl**: Reduced from 593 to ~144 lines, split into 7 entity-specific sync classes
 - ✅ **Reusable UI components**: Created common component library (InfoCard, MetricCard, TransactionCard, ActionButton, LoadingIndicator, FullScreenOverlay)
 - ✅ **Custom numeric keypad**: Implemented with decimal support and OK/Cancel buttons
+- ✅ **Tile labels shortened**: Cleaner tile selector UX
+- ✅ **Action tiles redesigned**: Alarm-widget-style pill buttons with brand colors
+- ✅ **Tile preview icons**: 11 drawable images for distinct tile selector previews
+- ✅ **ProtoLayout upgraded**: 1.2.1 → 1.4.1
 
 ### Remaining Areas for Improvement
 - **No WorkManager integration**: Sync only manual, no background sync
 - **Limited error recovery**: Some sync errors only logged, not retried
 - **No unit tests**: No test coverage implemented
 - **No integration tests**: No end-to-end testing
+- **Custom button height**: ProtoLayout lacks API for custom Chip height (platform limitation)
 
 ## Configuration
 
@@ -347,9 +389,8 @@ These are exposed as BuildConfig fields for use in authentication logic.
 ## Next Steps
 
 The project is ready for:
-1. **Phase 9**: Tiles implementation (10 tiles planned)
-2. **Phase 10**: Complications implementation (6 complications planned)
-3. **Further Refactoring**: WorkManager integration, error recovery, testing, modularization
-4. **Testing**: Unit and integration test coverage
-5. **Performance**: Optimization for battery and memory
-6. **Polish**: Animations, transitions, accessibility improvements
+1. **Refactoring**: WorkManager integration, error recovery, testing, modularization
+2. **Testing**: Unit and integration test coverage
+3. **Performance**: Optimization for battery and memory
+4. **Polish**: Animations, transitions, accessibility improvements
+5. **Play Store Release**: Signing, privacy policy, store listing
