@@ -211,7 +211,8 @@ The Room database contains 7 entities matching the React Native app schema:
 - Implemented Tile 6: **Monthly Expense Tile** layout (shows current month and total monthly expenses using Protolayout)
 - Implemented Tile 7: **Monthly Income Tile** layout (shows current month and total monthly income using Protolayout)
 - Implemented Tile 8: **Net Worth Tile** layout (shows overall net worth using Protolayout)
-- Registered `RemainingForPeriodTileService`, `UpcomingPayDayTileService`, `QuickAddExpenseTileService`, `QuickAddIncomeTileService`, `QuickTransactionTileService`, `QuickActionsTileService`, `MonthlyExpenseTileService`, `MonthlyIncomeTileService`, and `NetWorthTileService` in `AndroidManifest.xml`
+- Implemented Tile 9 (configurable): **Budget Tracker Tile** layout and configuration activity `BudgetTileConfigActivity` (lets users configure which budget to display via the watch interface, showing progress circle, spent/limit, and daily budget advice)
+- Registered `RemainingForPeriodTileService`, `UpcomingPayDayTileService`, `QuickAddExpenseTileService`, `QuickAddIncomeTileService`, `QuickTransactionTileService`, `QuickActionsTileService`, `MonthlyExpenseTileService`, `MonthlyIncomeTileService`, `NetWorthTileService`, and `BudgetTileService` in `AndroidManifest.xml`
 
 ## Business Logic Comparison with React Native
 

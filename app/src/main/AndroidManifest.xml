@@ -42,6 +42,16 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".presentation.tiles.configuration.BudgetTileConfigActivity"
+            android:exported="true"
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:label="@string/budget_tile_config_label"
+            android:theme="@android:style/Theme.DeviceDefault" />
+
+
         <service
             android:name=".presentation.tiles.RemainingForPeriodTileService"
             android:label="@string/tile_remaining_label"
@@ -142,6 +152,54 @@
             android:name=".presentation.tiles.NetWorthTileService"
             android:label="@string/tile_net_worth_label"
             android:description="@string/tile_net_worth_desc"
+            android:icon="@mipmap/ic_launcher"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".presentation.tiles.BudgetTileService"
+            android:label="@string/tile_budget_label"
+            android:description="@string/tile_budget_desc"
+            android:icon="@mipmap/ic_launcher"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".presentation.tiles.BudgetTileService2"
+            android:label="@string/tile_budget2_label"
+            android:description="@string/tile_budget2_desc"
+            android:icon="@mipmap/ic_launcher"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".presentation.tiles.BudgetTileService3"
+            android:label="@string/tile_budget3_label"
+            android:description="@string/tile_budget3_desc"
+            android:icon="@mipmap/ic_launcher"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".presentation.tiles.BudgetTileService4"
+            android:label="@string/tile_budget4_label"
+            android:description="@string/tile_budget4_desc"
             android:icon="@mipmap/ic_launcher"
             android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
             android:exported="true">

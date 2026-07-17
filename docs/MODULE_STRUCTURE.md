@@ -80,6 +80,9 @@ com.jayanth.jmoney.wear/
     │   ├── MonthlyExpenseTileService.kt  # Monthly expense tile service
     │   ├── MonthlyIncomeTileService.kt   # Monthly income tile service
     │   ├── NetWorthTileService.kt        # Net worth tile service
+    │   ├── BudgetTileService.kt           # Budget tile service (configurable)
+    │   ├── configuration/
+    │   │   └── BudgetTileConfigActivity.kt # Budget configuration activity
     │   ├── tiles/
     │   │   ├── RemainingForPeriodTile.kt # Remaining for period tile layout
     │   │   ├── UpcomingPayDayTile.kt     # Upcoming pay day tile layout
@@ -89,7 +92,8 @@ com.jayanth.jmoney.wear/
     │   │   ├── QuickActionsTile.kt       # Quick actions combination tile layout
     │   │   ├── MonthlyExpenseTile.kt     # Monthly expense tile layout
     │   │   ├── MonthlyIncomeTile.kt      # Monthly income tile layout
-    │   │   └── NetWorthTile.kt           # Net worth tile layout
+    │   │   ├── NetWorthTile.kt           # Net worth tile layout
+    │   │   └── BudgetTile.kt             # Budget tracker tile layout
     │   └── utils/
     │       ├── TileDataFetcher.kt        # Data fetcher for tiles
     │       └── TileResourceBuilder.kt    # Resource builder for tiles

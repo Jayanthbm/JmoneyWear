@@ -21,4 +21,13 @@
     <string name="tile_monthly_income_desc">Shows your total income for the current month.</string>
     <string name="tile_net_worth_label">Net Worth</string>
     <string name="tile_net_worth_desc">Shows your current net worth (total income minus total expense).</string>
+    <string name="tile_budget_label">Budget Tracker 1</string>
+    <string name="tile_budget_desc">Shows spending and progress for first configured budget category.</string>
+    <string name="tile_budget2_label">Budget Tracker 2</string>
+    <string name="tile_budget2_desc">Shows spending and progress for second configured budget category.</string>
+    <string name="tile_budget3_label">Budget Tracker 3</string>
+    <string name="tile_budget3_desc">Shows spending and progress for third configured budget category.</string>
+    <string name="tile_budget4_label">Budget Tracker 4</string>
+    <string name="tile_budget4_desc">Shows spending and progress for fourth configured budget category.</string>
+    <string name="budget_tile_config_label">Configure Budget Tile</string>
 </resources>
