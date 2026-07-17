@@ -113,6 +113,18 @@
                 <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".presentation.tiles.MonthlyExpenseTileService"
+            android:label="@string/tile_monthly_expense_label"
+            android:description="@string/tile_monthly_expense_desc"
+            android:icon="@mipmap/ic_launcher"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

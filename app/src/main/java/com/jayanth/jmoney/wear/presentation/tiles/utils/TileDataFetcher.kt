@@ -30,9 +30,24 @@ class TileDataFetcher @Inject constructor(
             isOverspent = remaining < 0
         )
     }
+    suspend fun fetchMonthlyExpense(): ExpenseData {
+        val userId = authRepository.getCurrentUserId() ?: return ExpenseData(0.0, "")
+        val today = LocalDate.now()
+        val monthStart = today.withDayOfMonth(1).toString()
+        val monthEnd = today.withDayOfMonth(today.lengthOfMonth()).toString()
+
+        val expense = transactionDao.getExpenseSummary(userId, monthStart, monthEnd) ?: 0.0
+        val monthStr = today.format(java.time.format.DateTimeFormatter.ofPattern("LLL")).uppercase()
+        return ExpenseData(expense, monthStr)
+    }
 }
 
 data class RemainingData(
     val amount: Double,
     val isOverspent: Boolean
+)
+
+data class ExpenseData(
+    val amount: Double,
+    val month: String
 )

@@ -15,4 +15,6 @@
     <string name="tile_quick_transaction_desc">Quick access to templates for logging transactions.</string>
     <string name="tile_quick_actions_label">Quick Actions</string>
     <string name="tile_quick_actions_desc">Combined quick buttons to add expense, income, and quick transactions.</string>
+    <string name="tile_monthly_expense_label">Monthly Expense</string>
+    <string name="tile_monthly_expense_desc">Shows your total expenses for the current month.</string>
 </resources>
