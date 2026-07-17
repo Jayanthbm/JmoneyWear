@@ -173,7 +173,7 @@ class DashboardViewModel @Inject constructor(
                 id = UUID.randomUUID().toString(),
                 amount = amount,
                 description = description ?: "Logged via watch",
-                transactionTimestamp = Instant.now().toString(),
+                transactionTimestamp = java.time.LocalDateTime.now().toString(),
                 date = LocalDate.now().toString(),
                 categoryId = categoryId,
                 categoryName = categoryName,

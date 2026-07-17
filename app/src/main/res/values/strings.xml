@@ -7,4 +7,6 @@
     <string name="tile_remaining_desc">Remaining budget or overspent amount for the current period.</string>
     <string name="tile_payday_label">Pay Day Countdown</string>
     <string name="tile_payday_desc">Countdown to your next pay day.</string>
+    <string name="tile_add_expense_label">Quick Add Expense</string>
+    <string name="tile_add_expense_desc">Quick access to log a new expense transaction.</string>
 </resources>

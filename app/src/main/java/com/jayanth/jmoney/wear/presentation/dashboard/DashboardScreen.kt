@@ -62,7 +62,9 @@ import com.jayanth.jmoney.wear.presentation.utils.formatTransactionDate
 
 @Composable
 fun DashboardScreen(
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel = viewModel(),
+    initialAction: String? = null,
+    onConsumeAction: () -> Unit = {}
 ) {
     val state by viewModel.dashboardState.collectAsState()
     val listState = rememberTransformingLazyColumnState()
@@ -108,7 +110,7 @@ fun DashboardScreen(
                             ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
                             ?: locationManager.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
                     } else null
-                    if (lastKnown != null) {
+                    if (lastKnown != null && (System.currentTimeMillis() - lastKnown.time) < 15 * 60 * 1000) {
                         currentLocation = lastKnown
                     }
 
@@ -175,6 +177,17 @@ fun DashboardScreen(
         )
         activeQuickTxItem = null
         showTransactionFormOverlay = true
+    }
+
+    LaunchedEffect(initialAction, state.categories) {
+        if (initialAction != null && state.categories.isNotEmpty()) {
+            if (initialAction == "add_expense") {
+                launchCustomAdd("Expense")
+            } else if (initialAction == "add_income") {
+                launchCustomAdd("Income")
+            }
+            onConsumeAction()
+        }
     }
 
     // Back handlers
@@ -503,7 +516,7 @@ fun DashboardScreen(
                                         ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
                                         ?: locationManager.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
                                 } else null
-                                if (lastKnown != null) {
+                                if (lastKnown != null && (System.currentTimeMillis() - lastKnown.time) < 15 * 60 * 1000) {
                                     lat = lastKnown.latitude
                                     lon = lastKnown.longitude
                                 }

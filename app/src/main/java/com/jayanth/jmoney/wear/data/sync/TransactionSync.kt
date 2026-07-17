@@ -135,8 +135,14 @@ class TransactionSync @Inject constructor(
 
     private fun toSupabaseTransactionTimestamp(timestamp: String): String {
         return try {
-            val instant = Instant.parse(timestamp)
-            java.time.format.DateTimeFormatter.ISO_INSTANT.format(instant)
+            val hasTimezone = timestamp.endsWith("Z") || timestamp.contains("+") || (timestamp.substringAfter("T", "").contains("-"))
+            val instant = if (hasTimezone) {
+                Instant.parse(timestamp)
+            } else {
+                return timestamp.replace(" ", "T")
+            }
+            val localDateTime = java.time.LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").format(localDateTime)
         } catch (e: Exception) {
             timestamp.replace(" ", "T")
         }

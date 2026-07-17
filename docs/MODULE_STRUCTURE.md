@@ -71,9 +71,13 @@ com.jayanth.jmoney.wear/
     │   ├── SyncScreen.kt
     │   └── SyncViewModel.kt
     ├── tiles/                            # Tiles feature (Phase 9)
-    │   ├── JmoneyTileService.kt          # Tile service
+    │   ├── RemainingForPeriodTileService.kt # Remaining for period tile service
+    │   ├── UpcomingPayDayTileService.kt  # Upcoming pay day tile service
+    │   ├── QuickAddExpenseTileService.kt # Quick add expense tile service
     │   ├── tiles/
-    │   │   └── RemainingForPeriodTile.kt # Remaining for period tile layout
+    │   │   ├── RemainingForPeriodTile.kt # Remaining for period tile layout
+    │   │   ├── UpcomingPayDayTile.kt     # Upcoming pay day tile layout
+    │   │   └── QuickAddExpenseTile.kt    # Quick add expense tile layout
     │   └── utils/
     │       ├── TileDataFetcher.kt        # Data fetcher for tiles
     │       └── TileResourceBuilder.kt    # Resource builder for tiles
