@@ -45,6 +45,7 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.ScrollIndicator
+import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -69,6 +70,17 @@ import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
 import com.jayanth.jmoney.wear.presentation.utils.formatRelativeTime
 import com.jayanth.jmoney.wear.presentation.utils.formatTransactionDate
 
+import kotlinx.coroutines.launch
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.ArrowUpward
+
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel(),
@@ -80,6 +92,10 @@ fun DashboardScreen(
     val listState = rememberTransformingLazyColumnState()
     val quickTxsListState = rememberTransformingLazyColumnState()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val showScrollToTop by remember {
+        derivedStateOf { listState.canScrollBackward }
+    }
 
     // Location permissions state
     var locationPermissionGranted by remember {
@@ -373,6 +389,7 @@ fun DashboardScreen(
                 }
         }
         }
+        }
 
         // Full Screen Quick Transactions Overlay
         if (showQuickTransactionsOverlay) {
@@ -561,8 +578,36 @@ fun DashboardScreen(
                 }
             )
         }
+
+        AnimatedVisibility(
+            visible = showScrollToTop,
+            enter = fadeIn() + slideInVertically { it },
+            exit = fadeOut() + slideOutVertically { it },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp)
+        ) {
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(0)
+                    }
+                },
+                modifier = Modifier.size(36.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                shape = CircleShape
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowUpward,
+                    contentDescription = "Scroll to top",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
     }
-}
 }
 
 @WearPreviewDevices
