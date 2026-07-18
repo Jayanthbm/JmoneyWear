@@ -7,7 +7,7 @@ import java.util.Locale
 
 fun formatCurrency(amount: Double): String {
     val isInteger = amount % 1.0 == 0.0
-    val formatter = NumberFormat.getNumberInstance(Locale("en", "IN")).apply {
+    val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("en-IN")).apply {
         minimumFractionDigits = if (isInteger) 0 else 2
         maximumFractionDigits = 2
     }

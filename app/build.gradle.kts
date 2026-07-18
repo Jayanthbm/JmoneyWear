@@ -120,6 +120,8 @@ dependencies {
 
     // WorkManager
     implementation(libs.work.runtime.ktx)
+    implementation(libs.hilt.work)
+    kapt(libs.hilt.work.compiler)
 
     // Supabase
     implementation(platform(libs.supabase.bom))

@@ -1,11 +1,14 @@
 package com.jayanth.jmoney.wear.presentation.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jayanth.jmoney.wear.data.repository.AuthRepository
 import com.jayanth.jmoney.wear.data.repository.SyncRepository
 import com.jayanth.jmoney.wear.data.repository.SyncState
+import com.jayanth.jmoney.wear.data.work.TileUpdateHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -23,7 +26,9 @@ data class SettingsState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val syncRepository: SyncRepository
+    private val syncRepository: SyncRepository,
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     val settingsState: StateFlow<SettingsState> = combine(
@@ -47,6 +52,7 @@ class SettingsViewModel @Inject constructor(
     fun forceFullSync() {
         viewModelScope.launch {
             syncRepository.runFullSync()
+            TileUpdateHelper.requestAllTileUpdates(context)
         }
     }
 
