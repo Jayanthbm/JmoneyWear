@@ -20,7 +20,7 @@ class UpcomingPayDayTileService : TileService() {
         return CallbackToFutureAdapter.getFuture<Tile> { completer ->
             try {
                 // Convert wear.tiles DeviceParameters to protolayout DeviceParameters
-                val tilesDevParams = requestParams.deviceParameters!!
+                val tilesDevParams = requestParams.deviceConfiguration!!
                 val protoDeviceParams = androidx.wear.protolayout.DeviceParametersBuilders.DeviceParameters.Builder()
                     .setScreenWidthDp(tilesDevParams.screenWidthDp)
                     .setScreenHeightDp(tilesDevParams.screenHeightDp)

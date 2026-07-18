@@ -19,7 +19,7 @@ class QuickAddIncomeTileService : TileService() {
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> {
         return CallbackToFutureAdapter.getFuture<Tile> { completer ->
             try {
-                val tilesDevParams = requestParams.deviceParameters!!
+                val tilesDevParams = requestParams.deviceConfiguration!!
                 val protoDeviceParams = androidx.wear.protolayout.DeviceParametersBuilders.DeviceParameters.Builder()
                     .setScreenWidthDp(tilesDevParams.screenWidthDp)
                     .setScreenHeightDp(tilesDevParams.screenHeightDp)

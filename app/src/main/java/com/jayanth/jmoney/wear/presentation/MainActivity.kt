@@ -42,6 +42,7 @@ import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.MaterialTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import com.jayanth.jmoney.wear.data.work.SyncScheduler
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -55,6 +56,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        SyncScheduler.schedule(this)
         actionState.value = intent?.getStringExtra("action")
         setContent {
             WearApp(

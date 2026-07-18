@@ -42,7 +42,7 @@ class BudgetTileService : TileService() {
                         dataFetcher.fetchBudgetSpending(budgetId)
                     } else null
 
-                    val tilesDevParams = requestParams.deviceParameters!!
+                    val tilesDevParams = requestParams.deviceConfiguration!!
                     val protoDeviceParams = androidx.wear.protolayout.DeviceParametersBuilders.DeviceParameters.Builder()
                         .setScreenWidthDp(tilesDevParams.screenWidthDp)
                         .setScreenHeightDp(tilesDevParams.screenHeightDp)
