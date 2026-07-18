@@ -93,9 +93,6 @@ fun DashboardScreen(
     val quickTxsListState = rememberTransformingLazyColumnState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val showScrollToTop by remember {
-        derivedStateOf { listState.canScrollBackward }
-    }
 
     // Location permissions state
     var locationPermissionGranted by remember {
@@ -577,35 +574,6 @@ fun DashboardScreen(
                     activeQuickTxItem = null
                 }
             )
-        }
-
-        AnimatedVisibility(
-            visible = showScrollToTop,
-            enter = fadeIn() + slideInVertically { it },
-            exit = fadeOut() + slideOutVertically { it },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 12.dp)
-        ) {
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(0)
-                    }
-                },
-                modifier = Modifier.size(36.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                shape = CircleShape
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.ArrowUpward,
-                    contentDescription = "Scroll to top",
-                    modifier = Modifier.size(18.dp)
-                )
-            }
         }
     }
 }

@@ -17,6 +17,7 @@ import androidx.wear.protolayout.material.Typography
 import androidx.wear.protolayout.material.layouts.EdgeContentLayout
 import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import com.jayanth.jmoney.wear.presentation.tiles.utils.GoalProgressData
+import com.jayanth.jmoney.wear.presentation.tiles.utils.TileTheme
 import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
 
 class GoalTile {
@@ -44,7 +45,7 @@ class GoalTile {
                     .setContent(
                         Text.Builder(context, "Please log in on watch")
                             .setTypography(Typography.TYPOGRAPHY_BODY1)
-                            .setColor(ColorBuilders.argb(0xFFFFFFFF.toInt()))
+                            .setColor(ColorBuilders.argb(TileTheme.TEXT))
                             .build()
                     )
                     .build()
@@ -56,39 +57,28 @@ class GoalTile {
                     .setOnClick(launchAction)
                     .build()
 
-                val chipColors = ChipColors.primaryChipColors(
-                    Colors(0xFF2196F3.toInt(), 0xFFFFFFFF.toInt(), 0xFF1A1A1A.toInt(), 0xFF888888.toInt())
+                return ActionTileLayout.build(
+                    context = context,
+                    deviceParameters = deviceParameters,
+                    title = "Goal Tracker",
+                    buttonText = "Select Goal",
+                    buttonColor = TileTheme.PRIMARY,
+                    clickable = chipClickable
                 )
-
-                val chip = Chip.Builder(context, chipClickable, deviceParameters)
-                    .setPrimaryLabelContent("Select Goal")
-                    .setChipColors(chipColors)
-                    .setWidth(DimensionBuilders.wrap())
-                    .build()
-
-                return PrimaryLayout.Builder(deviceParameters)
-                    .setPrimaryLabelTextContent(
-                        Text.Builder(context, "Goal Tracker")
-                            .setTypography(Typography.TYPOGRAPHY_CAPTION1)
-                            .setColor(ColorBuilders.argb(0xFFAAAAAA.toInt()))
-                            .build()
-                    )
-                    .setContent(chip)
-                    .build()
             }
 
             val pct = data.percentage.coerceIn(0.0, 1.0)
 
             // Color Coding for goal progress (savings):
             // Under 25% -> Red (Just starting)
-            // 25% to 50% -> Yellow (Building up)
-            // 50% to 80% -> Blue (Halfway or more)
+            // 25% to 50% -> Tonal Orange/Yellow
+            // 50% to 80% -> Blue
             // Over 80% -> Green (Almost achieved!)
             val indicatorColor = when {
-                pct > 0.8 -> 0xFF4CAF50.toInt()  // green
-                pct > 0.5 -> 0xFF2196F3.toInt()  // blue
-                pct > 0.25 -> 0xFFFFC107.toInt() // yellow
-                else -> 0xFFF44336.toInt()       // red
+                pct > 0.8  -> TileTheme.SUCCESS  // green
+                pct > 0.5  -> TileTheme.PRIMARY  // light blue
+                pct > 0.25 -> 0xFFFFD54F.toInt() // orange-yellow tint
+                else       -> TileTheme.DANGER   // red
             }
 
             val progressIndicator = CircularProgressIndicator.Builder()
@@ -96,7 +86,7 @@ class GoalTile {
                 .setCircularProgressIndicatorColors(
                     ProgressIndicatorColors(
                         ColorBuilders.argb(indicatorColor),
-                        ColorBuilders.argb(0xFF444444.toInt())
+                        ColorBuilders.argb(TileTheme.CARD_BACKGROUND)
                     )
                 )
                 .build()
@@ -114,13 +104,13 @@ class GoalTile {
                 .addContent(
                     Text.Builder(context, savedStr)
                         .setTypography(Typography.TYPOGRAPHY_TITLE2)
-                        .setColor(ColorBuilders.argb(0xFFFFFFFF.toInt()))
+                        .setColor(ColorBuilders.argb(TileTheme.TEXT))
                         .build()
                 )
                 .addContent(
                     Text.Builder(context, "of $targetStr")
                         .setTypography(Typography.TYPOGRAPHY_CAPTION2)
-                        .setColor(ColorBuilders.argb(0xFF888888.toInt()))
+                        .setColor(ColorBuilders.argb(TileTheme.TEXT_SECONDARY))
                         .build()
                 )
                 .setModifiers(
@@ -139,7 +129,7 @@ class GoalTile {
                 .setPrimaryLabelTextContent(
                     Text.Builder(context, truncatedName)
                         .setTypography(Typography.TYPOGRAPHY_CAPTION1)
-                        .setColor(ColorBuilders.argb(0xFFFFFFFF.toInt()))
+                        .setColor(ColorBuilders.argb(TileTheme.TEXT))
                         .build()
                 )
                 .setContent(centerColumn)

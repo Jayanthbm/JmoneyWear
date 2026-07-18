@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.Button
@@ -86,7 +88,8 @@ fun ExpressiveButton(
         enabled = enabled,
         interactionSource = interactionSource,
         modifier = modifier
-            .size(width = width, height = height)
+            .then(if (width != Dp.Unspecified) Modifier.width(width) else Modifier)
+            .then(if (height != Dp.Unspecified) Modifier.height(height) else Modifier)
             .scale(scale)
     ) {
         Row(

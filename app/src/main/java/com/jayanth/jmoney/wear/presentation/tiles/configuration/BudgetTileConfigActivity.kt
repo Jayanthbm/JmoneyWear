@@ -31,6 +31,14 @@ import com.jayanth.jmoney.wear.presentation.tiles.BudgetTileService4
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.Dp
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.ScrollIndicator
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import com.jayanth.jmoney.wear.presentation.common.buttons.ExpressiveButton
+
 @AndroidEntryPoint
 class BudgetTileConfigActivity : ComponentActivity() {
 
@@ -63,44 +71,55 @@ class BudgetTileConfigActivity : ComponentActivity() {
                     isLoading = false
                 }
 
-                val listState = rememberScalingLazyListState()
+                val listState = rememberTransformingLazyColumnState()
 
-                ScalingLazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp),
-                    state = listState
-                ) {
-                    item {
-                        Text(
-                            text = "Select Budget",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                ScreenScaffold(
+                    scrollState = listState,
+                    scrollIndicator = {
+                        ScrollIndicator(state = listState)
                     }
+                ) { contentPadding ->
+                    TransformingLazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        state = listState,
+                        contentPadding = contentPadding,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        item {
+                            Text(
+                                text = "Select Budget",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(top = 18.dp, bottom = 12.dp)
+                            )
+                        }
 
-                    if (isLoading) {
-                        item {
-                            Text("Loading...")
-                        }
-                    } else if (budgets.isEmpty()) {
-                        item {
-                            Text("No budgets found.")
-                        }
-                    } else {
-                        items(budgets.size) { index ->
-                            val budget = budgets[index]
-                            Button(
-                                onClick = {
-                                    saveBudgetSelection(configKey, budget.id)
-                                    requestTileUpdate()
-                                    finish()
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                            ) {
-                                Text(budget.name)
+                        if (isLoading) {
+                            item {
+                                Text("Loading...")
+                            }
+                        } else if (budgets.isEmpty()) {
+                            item {
+                                Text("No budgets found.")
+                            }
+                        } else {
+                            items(budgets.size) { index ->
+                                val budget = budgets[index]
+                                ExpressiveButton(
+                                    onClick = {
+                                        saveBudgetSelection(configKey, budget.id)
+                                        requestTileUpdate()
+                                        finish()
+                                    },
+                                    text = budget.name,
+                                    isPrimary = false,
+                                    width = Dp.Unspecified,
+                                    height = 52.dp,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                )
                             }
                         }
                     }

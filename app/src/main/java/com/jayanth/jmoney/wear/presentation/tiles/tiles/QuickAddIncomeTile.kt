@@ -7,6 +7,8 @@ import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ModifiersBuilders
 import com.jayanth.jmoney.wear.presentation.MainActivity
 
+import com.jayanth.jmoney.wear.presentation.tiles.utils.TileTheme
+
 class QuickAddIncomeTile {
     companion object {
         fun buildLayout(
@@ -31,9 +33,9 @@ class QuickAddIncomeTile {
             return ActionTileLayout.build(
                 context = context,
                 deviceParameters = deviceParameters,
-                title = "Income",
+                title = "Log Income",
                 buttonText = "Add",
-                buttonColor = 0xFF2ECC71.toInt(),
+                buttonColor = TileTheme.SUCCESS,
                 clickable = clickable
             )
         }

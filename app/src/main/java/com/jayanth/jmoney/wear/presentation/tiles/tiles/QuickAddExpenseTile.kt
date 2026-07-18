@@ -7,6 +7,8 @@ import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ModifiersBuilders
 import com.jayanth.jmoney.wear.presentation.MainActivity
 
+import com.jayanth.jmoney.wear.presentation.tiles.utils.TileTheme
+
 class QuickAddExpenseTile {
     companion object {
         fun buildLayout(
@@ -31,9 +33,9 @@ class QuickAddExpenseTile {
             return ActionTileLayout.build(
                 context = context,
                 deviceParameters = deviceParameters,
-                title = "Expense",
+                title = "Log Expense",
                 buttonText = "Add",
-                buttonColor = 0xFFFF453A.toInt(),
+                buttonColor = TileTheme.DANGER,
                 clickable = clickable
             )
         }

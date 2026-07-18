@@ -32,9 +32,6 @@ object ActionTileLayout {
     /** Button width as fraction of tile width */
     private const val BUTTON_WIDTH_FRACTION = 0.89f
 
-    /** Vertical spacer between title and button */
-    private const val SPACER_HEIGHT_DP = 28f
-
     /**
      * Builds the full tile layout.
      *
@@ -51,37 +48,60 @@ object ActionTileLayout {
         buttonColor: Int,
         clickable: ModifiersBuilders.Clickable
     ): LayoutElementBuilders.LayoutElement {
-        // Darker shade for pressed/activated state (built-in Material feedback via ChipColors)
-        val darkColor = darkenColor(buttonColor, 0.7f)
-
-        val chipColors = ChipColors.primaryChipColors(
-            Colors(buttonColor, 0xFFFFFFFF.toInt(), darkColor, 0xFF888888.toInt())
-        )
-
-        // ~89% of total tile width → centered pill button
-        val chipWidthDp = deviceParameters.screenWidthDp * BUTTON_WIDTH_FRACTION
-
-        val chip = Chip.Builder(context, clickable, deviceParameters)
-            .setPrimaryLabelContent(buttonText)
-            .setChipColors(chipColors)
-            .setWidth(DimensionBuilders.dp(chipWidthDp))
+        // Centered title text (medium-small secondary text)
+        val titleText = Text.Builder(context, title)
+            .setTypography(Typography.TYPOGRAPHY_BODY1)
+            .setColor(ColorBuilders.argb(0xFFC4C7C5.toInt())) // TextSecondary gray
             .build()
 
-        // 28dp spacer + chip for balanced vertical layout
-        val contentColumn = LayoutElementBuilders.Column.Builder()
-            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
-            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(DimensionBuilders.dp(SPACER_HEIGHT_DP)).build())
-            .addContent(chip)
-            .build()
+        // Custom capsule/pill button dimensions (160dp width x 60dp height) for larger padding/thickness
+        val buttonWidth = DimensionBuilders.dp(160f)
+        val buttonHeight = DimensionBuilders.dp(60f)
 
-        return PrimaryLayout.Builder(deviceParameters)
-            .setPrimaryLabelTextContent(
-                Text.Builder(context, title)
-                    .setTypography(Typography.TYPOGRAPHY_TITLE2)
-                    .setColor(ColorBuilders.argb(0xFFB8B8B8.toInt()))
+        // Pill shape background modifier with 30dp radius (half of 60dp height for perfect capsule)
+        val background = ModifiersBuilders.Background.Builder()
+            .setColor(ColorBuilders.argb(buttonColor))
+            .setCorner(
+                ModifiersBuilders.Corner.Builder()
+                    .setRadius(DimensionBuilders.dp(30f))
                     .build()
             )
-            .setContent(contentColumn)
+            .build()
+
+        val buttonModifiers = ModifiersBuilders.Modifiers.Builder()
+            .setClickable(clickable)
+            .setBackground(background)
+            .build()
+
+        // Centered bold button label (using TITLE3 for premium sizing)
+        val textElement = Text.Builder(context, buttonText)
+            .setTypography(Typography.TYPOGRAPHY_TITLE3)
+            .setColor(ColorBuilders.argb(0xFF121314.toInt())) // High contrast dark charcoal text
+            .build()
+
+        val pillButton = LayoutElementBuilders.Box.Builder()
+            .setWidth(buttonWidth)
+            .setHeight(buttonHeight)
+            .setModifiers(buttonModifiers)
+            .addContent(textElement)
+            .build()
+
+        // Custom Column layout to control vertical alignments without default PrimaryLayout app icon
+        val column = LayoutElementBuilders.Column.Builder()
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .addContent(titleText)
+            // Spacing between text and button matching Next Alarm widget
+            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(DimensionBuilders.dp(18f)).build())
+            .addContent(pillButton)
+            // Bottom spacer to nudge the elements upwards, reducing top spacing
+            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(DimensionBuilders.dp(45f)).build())
+            .build()
+
+        // Wrap in full size Box container with explicit dimensions to guarantee correct rendering
+        return LayoutElementBuilders.Box.Builder()
+            .setWidth(DimensionBuilders.dp(deviceParameters.screenWidthDp.toFloat()))
+            .setHeight(DimensionBuilders.dp(deviceParameters.screenHeightDp.toFloat()))
+            .addContent(column)
             .build()
     }
 

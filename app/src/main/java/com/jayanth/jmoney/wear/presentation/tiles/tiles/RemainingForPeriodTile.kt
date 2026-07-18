@@ -11,6 +11,8 @@ import androidx.wear.protolayout.material.Typography
 import com.jayanth.jmoney.wear.presentation.tiles.utils.RemainingData
 import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
 
+import com.jayanth.jmoney.wear.presentation.tiles.utils.TileTheme
+
 class RemainingForPeriodTile {
     companion object {
         fun buildLayout(
@@ -20,11 +22,9 @@ class RemainingForPeriodTile {
             isLoggedIn: Boolean
         ): LayoutElementBuilders.LayoutElement {
             val colors = if (data.isOverspent) {
-                // Red for overspent
-                Colors(0xFFF44336.toInt(), 0xFFFFFFFF.toInt(), 0, 0)
+                Colors(TileTheme.DANGER, TileTheme.TEXT, 0, 0)
             } else {
-                // Green for remaining
-                Colors(0xFF4CAF50.toInt(), 0xFFFFFFFF.toInt(), 0, 0)
+                Colors(TileTheme.SUCCESS, TileTheme.TEXT, 0, 0)
             }
 
             val mainLayout = if (!isLoggedIn) {
@@ -32,13 +32,18 @@ class RemainingForPeriodTile {
                     .setContent(
                         Text.Builder(context, "Please log in on watch")
                             .setTypography(Typography.TYPOGRAPHY_BODY1)
-                            .setColor(ColorBuilders.argb(0xFFFFFFFF.toInt()))
+                            .setColor(ColorBuilders.argb(TileTheme.TEXT))
                             .build()
                     )
                     .build()
             } else {
                 val label = if (data.isOverspent) "OVERSPENT" else "REMAINING"
                 val amountStr = formatCurrency(data.amount)
+                val displayAmount = if (amountStr.endsWith(".00")) {
+                    amountStr.substring(0, amountStr.length - 3)
+                } else {
+                    amountStr
+                }
 
                 PrimaryLayout.Builder(deviceParameters)
                     .setPrimaryLabelTextContent(
@@ -48,15 +53,15 @@ class RemainingForPeriodTile {
                             .build()
                     )
                     .setContent(
-                        Text.Builder(context, amountStr)
-                            .setTypography(Typography.TYPOGRAPHY_DISPLAY1)
-                            .setColor(ColorBuilders.argb(0xFFFFFFFF.toInt()))
+                        Text.Builder(context, displayAmount)
+                            .setTypography(Typography.TYPOGRAPHY_TITLE2)
+                            .setColor(ColorBuilders.argb(TileTheme.TEXT))
                             .build()
                     )
                     .setSecondaryLabelTextContent(
                         Text.Builder(context, "Monthly Period")
                             .setTypography(Typography.TYPOGRAPHY_CAPTION2)
-                            .setColor(ColorBuilders.argb(0xFF888888.toInt()))
+                            .setColor(ColorBuilders.argb(TileTheme.TEXT_SECONDARY))
                             .build()
                     )
                     .build()

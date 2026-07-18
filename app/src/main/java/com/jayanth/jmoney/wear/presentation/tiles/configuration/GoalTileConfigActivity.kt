@@ -30,6 +30,14 @@ import com.jayanth.jmoney.wear.presentation.tiles.GoalTileService3
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.Dp
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.ScrollIndicator
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
+import com.jayanth.jmoney.wear.presentation.common.buttons.ExpressiveButton
+
 @AndroidEntryPoint
 class GoalTileConfigActivity : ComponentActivity() {
 
@@ -61,44 +69,55 @@ class GoalTileConfigActivity : ComponentActivity() {
                     isLoading = false
                 }
 
-                val listState = rememberScalingLazyListState()
+                val listState = rememberTransformingLazyColumnState()
 
-                ScalingLazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp),
-                    state = listState
-                ) {
-                    item {
-                        Text(
-                            text = "Select Goal",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                ScreenScaffold(
+                    scrollState = listState,
+                    scrollIndicator = {
+                        ScrollIndicator(state = listState)
                     }
+                ) { contentPadding ->
+                    TransformingLazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        state = listState,
+                        contentPadding = contentPadding,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        item {
+                            Text(
+                                text = "Select Goal",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(top = 18.dp, bottom = 12.dp)
+                            )
+                        }
 
-                    if (isLoading) {
-                        item {
-                            Text("Loading...")
-                        }
-                    } else if (goals.isEmpty()) {
-                        item {
-                            Text("No goals found.")
-                        }
-                    } else {
-                        items(goals.size) { index ->
-                            val goal = goals[index]
-                            Button(
-                                onClick = {
-                                    saveGoalSelection(configKey, goal.id)
-                                    requestTileUpdate()
-                                    finish()
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                            ) {
-                                Text(goal.name)
+                        if (isLoading) {
+                            item {
+                                Text("Loading...")
+                            }
+                        } else if (goals.isEmpty()) {
+                            item {
+                                Text("No goals found.")
+                            }
+                        } else {
+                            items(goals.size) { index ->
+                                val goal = goals[index]
+                                ExpressiveButton(
+                                    onClick = {
+                                        saveGoalSelection(configKey, goal.id)
+                                        requestTileUpdate()
+                                        finish()
+                                    },
+                                    text = goal.name,
+                                    isPrimary = false,
+                                    width = Dp.Unspecified,
+                                    height = 52.dp,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                )
                             }
                         }
                     }

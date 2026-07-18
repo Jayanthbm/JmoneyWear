@@ -7,6 +7,8 @@ import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.ModifiersBuilders
 import com.jayanth.jmoney.wear.presentation.MainActivity
 
+import com.jayanth.jmoney.wear.presentation.tiles.utils.TileTheme
+
 class QuickTransactionTile {
     companion object {
         fun buildLayout(
@@ -33,7 +35,7 @@ class QuickTransactionTile {
                 deviceParameters = deviceParameters,
                 title = "Quick Add",
                 buttonText = "Presets",
-                buttonColor = 0xFF2F80ED.toInt(),
+                buttonColor = TileTheme.PRIMARY,
                 clickable = clickable
             )
         }
