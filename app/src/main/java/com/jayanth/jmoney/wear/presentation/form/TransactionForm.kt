@@ -28,13 +28,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
-import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.Card
 import androidx.wear.compose.material3.CardDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.ScrollIndicator
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -42,6 +41,8 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.wear.input.RemoteInputIntentHelper
 import com.jayanth.jmoney.wear.data.database.CategoryEntity
 import com.jayanth.jmoney.wear.data.database.PayeeEntity
+import com.jayanth.jmoney.wear.presentation.common.buttons.ExpressiveButton
+import com.jayanth.jmoney.wear.presentation.common.cards.ExpressiveCard
 import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
 
 data class TransactionFormData(
@@ -101,8 +102,7 @@ fun TransactionForm(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         when {
@@ -132,11 +132,20 @@ fun TransactionForm(
                 )
             }
             else -> {
-                TransformingLazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                ScreenScaffold(
+                    scrollState = listState,
+                    scrollIndicator = {
+                        ScrollIndicator(state = listState)
+                    }
+                ) { contentPadding ->
+                    TransformingLazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        contentPadding = contentPadding,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                     item {
                         val headerTitle = when (type) {
                             "Income" -> "Log Income"
@@ -152,106 +161,86 @@ fun TransactionForm(
 
                     // Amount Card
                     item {
-                        Card(
+                        ExpressiveCard(
                             onClick = { showNumericKeypad = true },
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 4.dp)
+                            )
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = "Amount (Tap to Edit)",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = formatCurrency(amount),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
+                            Text(
+                                text = "Amount (Tap to Edit)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = formatCurrency(amount),
+                                style = MaterialTheme.typography.titleMedium
+                            )
                         }
                     }
 
                     // Category Card
                     item {
-                        Card(
-                            onClick = { showCategorySelection = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 4.dp)
+                        ExpressiveCard(
+                            onClick = { showCategorySelection = true }
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = "Category (Tap to Edit)",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = selectedCategory?.name ?: "Tap to Select",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (selectedCategory == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                )
-                            }
+                            Text(
+                                text = "Category (Tap to Edit)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = selectedCategory?.name ?: "Tap to Select",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (selectedCategory == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
 
                     // Payee Card
                     item {
-                        Card(
-                            onClick = { showPayeeSelection = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 4.dp)
+                        ExpressiveCard(
+                            onClick = { showPayeeSelection = true }
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = "Payee (Tap to Edit)",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = selectedPayee?.name ?: "None",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (selectedPayee == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-                                )
-                            }
+                            Text(
+                                text = "Payee (Tap to Edit)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = selectedPayee?.name ?: "None",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (selectedPayee == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
 
                     // Description Card
                     item {
-                        Card(
-                            onClick = { launchDescInput() },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp)
+                        ExpressiveCard(
+                            onClick = { launchDescInput() }
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                Text(
-                                    text = "Description (Tap to Edit)",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = if (description.isBlank()) "(empty)" else description,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (description.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+                            Text(
+                                text = "Description (Tap to Edit)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (description.isBlank()) "(empty)" else description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (description.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
 
-                    // Action Buttons
+                    // Action Buttons (Confirm & Cancel)
                     item {
                         Row(
                             modifier = Modifier
@@ -259,21 +248,14 @@ fun TransactionForm(
                                 .padding(horizontal = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
                         ) {
-                            Button(
+                            ExpressiveButton(
                                 onClick = onCancel,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                ),
-                                modifier = Modifier.size(52.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Clear,
-                                    contentDescription = "Cancel",
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            Button(
+                                icon = Icons.Filled.Clear,
+                                isPrimary = false,
+                                isError = true,
+                                size = 52.dp
+                            )
+                            ExpressiveButton(
                                 onClick = {
                                     if (amount <= 0.0) {
                                         Toast.makeText(context, "Please enter an amount > 0", Toast.LENGTH_SHORT).show()
@@ -289,24 +271,17 @@ fun TransactionForm(
                                         )
                                     }
                                 },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                ),
-                                modifier = Modifier.size(52.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Check,
-                                    contentDescription = "OK",
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
+                                icon = Icons.Filled.Check,
+                                isPrimary = true,
+                                size = 52.dp
+                            )
                         }
                     }
 
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
                     }
+                }
                 }
             }
         }

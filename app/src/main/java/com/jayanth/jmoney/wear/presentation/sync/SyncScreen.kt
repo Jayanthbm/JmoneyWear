@@ -18,10 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.jayanth.jmoney.wear.presentation.common.buttons.ExpressiveButton
 import com.jayanth.jmoney.wear.data.repository.SyncState
 
 @Composable
@@ -81,12 +82,14 @@ fun SyncScreen(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
-                    Button(
+                    ExpressiveButton(
                         onClick = { viewModel.forceFullSync() },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    ) {
-                        Text("Retry")
-                    }
+                        text = "Retry",
+                        isPrimary = true,
+                        width = 120.dp,
+                        height = 40.dp,
+                        shape = ButtonDefaults.shape
+                    )
                 }
             }
             else -> {

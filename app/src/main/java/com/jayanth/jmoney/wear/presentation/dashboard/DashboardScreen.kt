@@ -43,15 +43,25 @@ import androidx.wear.compose.material3.CardDefaults
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.ScrollIndicator
+import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import com.jayanth.jmoney.wear.data.database.CategoryEntity
 import com.jayanth.jmoney.wear.data.database.PayeeEntity
-import com.jayanth.jmoney.wear.presentation.common.buttons.ActionButton
+import com.jayanth.jmoney.wear.presentation.common.buttons.ExpressiveButton
 import com.jayanth.jmoney.wear.presentation.common.cards.MetricCard
+import com.jayanth.jmoney.wear.presentation.common.cards.PayDayCard
+import com.jayanth.jmoney.wear.presentation.common.cards.IconMetricCard
+import com.jayanth.jmoney.wear.presentation.common.cards.ExpressiveCard
 import com.jayanth.jmoney.wear.presentation.common.cards.TransactionCard
 import com.jayanth.jmoney.wear.presentation.common.loading.LoadingIndicator
 import com.jayanth.jmoney.wear.presentation.form.TransactionFormData
@@ -60,15 +70,29 @@ import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
 import com.jayanth.jmoney.wear.presentation.utils.formatRelativeTime
 import com.jayanth.jmoney.wear.presentation.utils.formatTransactionDate
 
+import kotlinx.coroutines.launch
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.ArrowUpward
+
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel(),
     initialAction: String? = null,
-    onConsumeAction: () -> Unit = {}
+    onConsumeAction: () -> Unit = {},
+    onOverlayStateChanged: (isOpen: Boolean) -> Unit = {}
 ) {
     val state by viewModel.dashboardState.collectAsState()
     val listState = rememberTransformingLazyColumnState()
+    val quickTxsListState = rememberTransformingLazyColumnState()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     // Location permissions state
     var locationPermissionGranted by remember {
@@ -87,6 +111,12 @@ fun DashboardScreen(
 
     // Transaction Form Overlay State
     var showTransactionFormOverlay by remember { mutableStateOf(false) }
+    var showQuickTransactionsOverlay by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showTransactionFormOverlay, showQuickTransactionsOverlay) {
+        onOverlayStateChanged(showTransactionFormOverlay || showQuickTransactionsOverlay)
+    }
+
     var currentLocation by remember { mutableStateOf<android.location.Location?>(null) }
 
     // Request location permissions and fetch location when the transaction form is displayed
@@ -155,7 +185,6 @@ fun DashboardScreen(
     }
 
     // Quick Transaction presets overlay state
-    var showQuickTransactionsOverlay by remember { mutableStateOf(false) }
     var activeQuickTxItem by remember { mutableStateOf<QuickTransactionItem?>(null) }
 
     // Default category names per type
@@ -204,15 +233,25 @@ fun DashboardScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        TransformingLazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        ScreenScaffold(
+            scrollState = listState,
+            scrollIndicator = {
+                if (!showQuickTransactionsOverlay && !showTransactionFormOverlay) {
+                    ScrollIndicator(state = listState)
+                }
+            }
+        ) { contentPadding ->
+            TransformingLazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentPadding = contentPadding,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             // Header: Jmoney
             item {
                 Text(
@@ -232,21 +271,21 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ActionButton(
+                    ExpressiveButton(
                         onClick = { launchCustomAdd("Expense") },
                         icon = Icons.Filled.Remove,
                         text = "Expense",
                         isError = true
                     )
                     Spacer(modifier = Modifier.width(10.dp))
-                    ActionButton(
+                    ExpressiveButton(
                         onClick = { launchCustomAdd("Income") },
                         icon = Icons.Filled.Add,
                         text = "Income",
                         isPrimary = true
                     )
                     Spacer(modifier = Modifier.width(10.dp))
-                    ActionButton(
+                    ExpressiveButton(
                         onClick = { showQuickTransactionsOverlay = true },
                         icon = Icons.Filled.Bolt,
                         text = "Quick Transaction",
@@ -266,76 +305,53 @@ fun DashboardScreen(
 
             // 2. Spent Today
             item {
-                MetricCard(
+                IconMetricCard(
                     label = "SPENT TODAY",
-                    value = formatCurrency(state.spentToday)
+                    value = formatCurrency(state.spentToday),
+                    icon = Icons.Filled.Payments
                 )
             }
 
             // 3. Upcoming Pay Day
             item {
-                MetricCard(
-                    label = "UPCOMING PAY DAY",
-                    value = "${state.payDayInfo.remainingDays} days (${state.payDayInfo.nextPayDate})"
+                PayDayCard(
+                    nextPayDate = state.payDayInfo.nextPayDate,
+                    remainingDays = state.payDayInfo.remainingDays,
+                    daysInMonth = state.payDayInfo.daysInMonth
                 )
             }
 
             // 4. Monthly Expense
             item {
                 val isExpenseOverIncome = state.monthlyExpense > state.monthlyIncome
-                MetricCard(
+                IconMetricCard(
                     label = "MONTHLY EXPENSE",
                     value = formatCurrency(state.monthlyExpense),
-                    isError = isExpenseOverIncome
+                    icon = Icons.AutoMirrored.Filled.TrendingDown,
+                    iconContainerColor = if (isExpenseOverIncome) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                    iconTint = if (isExpenseOverIncome) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
             // 5. Monthly Income
             item {
-                MetricCard(
+                IconMetricCard(
                     label = "MONTHLY INCOME",
-                    value = formatCurrency(state.monthlyIncome)
+                    value = formatCurrency(state.monthlyIncome),
+                    icon = Icons.AutoMirrored.Filled.TrendingUp
                 )
             }
 
             // 6. Net Worth
             item {
-                MetricCard(
+                IconMetricCard(
                     label = "NET WORTH",
-                    value = formatCurrency(state.netWorth)
+                    value = formatCurrency(state.netWorth),
+                    icon = Icons.Filled.AccountBalanceWallet
                 )
             }
 
-            // 7. Recent Transactions
-            if (state.recentTransactions.isNotEmpty()) {
-                item {
-                    Text(
-                        text = "Recent Transactions",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        textAlign = TextAlign.Start
-                    )
-                }
 
-                items(state.recentTransactions.size) { index ->
-                    val tx = state.recentTransactions[index]
-                    val displayName = when {
-                        !tx.payeeName.isNullOrBlank() -> tx.payeeName
-                        !tx.categoryName.isNullOrBlank() -> tx.categoryName
-                        !tx.description.isNullOrBlank() -> tx.description
-                        else -> "Transaction"
-                    }
-                    TransactionCard(
-                        displayName = displayName,
-                        date = formatTransactionDate(tx.date),
-                        amount = tx.amount,
-                        isIncome = tx.type == "Income"
-                    )
-                }
-            }
 
             // 8. Refresh Sync
             item {
@@ -352,19 +368,15 @@ fun DashboardScreen(
                                 .padding(bottom = 4.dp)
                         )
                     } else {
-                        Button(
+                        ExpressiveButton(
                             onClick = { viewModel.syncNow() },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
+                            text = "Refresh",
+                            isPrimary = true,
+                            width = 120.dp,
+                            height = 40.dp,
+                            shape = ButtonDefaults.shape,
                             modifier = Modifier.padding(bottom = 4.dp)
-                        ) {
-                            Text(
-                                text = "Refresh Sync",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
+                        )
                     }
                     Text(
                         text = formatRelativeTime(state.lastSyncTimestamp),
@@ -372,7 +384,8 @@ fun DashboardScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
+        }
+        }
         }
 
         // Full Screen Quick Transactions Overlay
@@ -381,14 +394,15 @@ fun DashboardScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(16.dp),
+                    .background(MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
                 if (quickTxs.isEmpty()) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
                     ) {
                         Text(
                             text = "No quick presets found",
@@ -404,11 +418,21 @@ fun DashboardScreen(
                         }
                     }
                 } else {
-                    TransformingLazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        item {
+                    ScreenScaffold(
+                        scrollState = quickTxsListState,
+                        scrollIndicator = {
+                            ScrollIndicator(state = quickTxsListState)
+                        }
+                    ) { contentPadding ->
+                        TransformingLazyColumn(
+                            state = quickTxsListState,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            contentPadding = contentPadding,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            item {
                             Text(
                                 text = "Quick Presets",
                                 style = MaterialTheme.typography.titleSmall,
@@ -421,7 +445,7 @@ fun DashboardScreen(
                             val logoText = qt.template.identifier?.takeIf { it.isNotBlank() }
                                 ?: qt.template.name.take(2).uppercase()
 
-                            Card(
+                            ExpressiveCard(
                                 onClick = {
                                     transactionFormData = TransactionFormData(
                                         amount = qt.template.amount ?: 0.0,
@@ -435,9 +459,6 @@ fun DashboardScreen(
                                     showQuickTransactionsOverlay = false
                                     showTransactionFormOverlay = true
                                 },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 4.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -445,8 +466,8 @@ fun DashboardScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     val isIncome = qt.template.type == "Income"
-                                    val accentColor = if (isIncome) Color(0xFF4ADE80) else Color(0xFFEF4444)
-                                    val badgeBgColor = if (isIncome) Color(0x224ADE80) else Color(0x22EF4444)
+                                    val badgeBgColor = if (isIncome) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.errorContainer
+                                    val accentColor = if (isIncome) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onErrorContainer
                                     Box(
                                         modifier = Modifier
                                             .size(34.dp)
@@ -477,24 +498,25 @@ fun DashboardScreen(
                                     }
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = (if (qt.template.type == "Income") "+" else "-") + formatCurrency(qt.template.amount ?: 0.0),
+                                        text = (if (isIncome) "+" else "-") + formatCurrency(qt.template.amount ?: 0.0),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (qt.template.type == "Income") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        color = if (isIncome) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
                                     )
                                 }
                             }
                         }
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
-                            Button(
+                            ExpressiveButton(
                                 onClick = { showQuickTransactionsOverlay = false },
-                                colors = ButtonDefaults.filledTonalButtonColors(),
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            ) {
-                                Text("Cancel", style = MaterialTheme.typography.labelSmall)
-                            }
+                                text = "Cancel",
+                                isPrimary = false,
+                                modifier = Modifier.padding(bottom = 16.dp),
+                                size = 52.dp
+                            )
                         }
                     }
+                }
                 }
             }
         }

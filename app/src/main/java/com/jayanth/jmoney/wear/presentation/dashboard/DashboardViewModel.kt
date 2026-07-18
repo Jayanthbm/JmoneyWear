@@ -29,7 +29,8 @@ import javax.inject.Inject
 
 data class PayDayInfo(
     val remainingDays: Int,
-    val nextPayDate: String
+    val nextPayDate: String,
+    val daysInMonth: Int
 )
 
 data class QuickTransactionItem(
@@ -48,7 +49,7 @@ data class DashboardState(
     val monthlyExpense: Double = 0.0,
     val monthlyIncome: Double = 0.0,
     val netWorth: Double = 0.0,
-    val payDayInfo: PayDayInfo = PayDayInfo(0, ""),
+    val payDayInfo: PayDayInfo = PayDayInfo(0, "", 30),
     val recentTransactions: List<TransactionEntity> = emptyList(),
     val quickTransactions: List<QuickTransactionItem> = emptyList(),
     val categories: List<CategoryEntity> = emptyList(),
@@ -82,7 +83,7 @@ class DashboardViewModel @Inject constructor(
         val remainingDays = daysInMonth - currentDay + 1
         val nextPayDateInstant = today.plusMonths(1).withDayOfMonth(1)
         val formattedNextMonth = nextPayDateInstant.format(DateTimeFormatter.ofPattern("MMM 01"))
-        val payDayInfo = PayDayInfo(remainingDays, formattedNextMonth)
+        val payDayInfo = PayDayInfo(remainingDays, formattedNextMonth, daysInMonth)
 
         combine(
             transactionDao.getMonthlyIncomeFlow(userId, monthStart, monthEnd),

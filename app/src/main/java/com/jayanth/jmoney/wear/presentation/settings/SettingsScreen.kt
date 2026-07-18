@@ -22,16 +22,32 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
-import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.Card
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.ScrollIndicator
+import com.jayanth.jmoney.wear.presentation.common.buttons.ExpressiveButton
 import com.jayanth.jmoney.wear.presentation.common.cards.InfoCard
 import com.jayanth.jmoney.wear.presentation.common.loading.LoadingIndicator
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import com.jayanth.jmoney.wear.presentation.utils.formatRelativeTime
+
+import androidx.compose.foundation.layout.size
+import kotlinx.coroutines.launch
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.Icon
 
 @Composable
 fun SettingsScreen(
@@ -40,6 +56,7 @@ fun SettingsScreen(
     val state by viewModel.settingsState.collectAsState()
     val listState = rememberTransformingLazyColumnState()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val versionName = remember {
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -59,17 +76,25 @@ fun SettingsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        TransformingLazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Header
-            item {
+            ScreenScaffold(
+                scrollState = listState,
+                scrollIndicator = {
+                    ScrollIndicator(state = listState)
+                }
+            ) { contentPadding ->
+                TransformingLazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    contentPadding = contentPadding,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Header
+                    item {
                 Text(
                     text = "Settings",
                     style = MaterialTheme.typography.titleMedium,
@@ -116,40 +141,32 @@ fun SettingsScreen(
                         }
                     }
                 } else {
-                    Button(
+                    ExpressiveButton(
                         onClick = { viewModel.forceFullSync() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    ) {
-                        Text(
-                            text = "Force Full Sync",
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
+                        text = "Force Full Sync",
+                        isPrimary = false,
+                        isError = true,
+                        width = 140.dp,
+                        height = 40.dp,
+                        shape = ButtonDefaults.shape,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
                 }
             }
 
             // Sign Out Action
             item {
                 Spacer(modifier = Modifier.height(6.dp))
-                Button(
-                    onClick = { viewModel.signOut() },
-                    colors = ButtonDefaults.filledTonalButtonColors(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    enabled = !state.isSyncing
-                ) {
-                    Text(
+                    ExpressiveButton(
+                        onClick = { viewModel.signOut() },
                         text = "Sign Out",
-                        style = MaterialTheme.typography.labelSmall
+                        isPrimary = false,
+                        enabled = !state.isSyncing,
+                        width = 140.dp,
+                        height = 40.dp,
+                        shape = ButtonDefaults.shape,
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
-                }
             }
 
             // App Version Footer
@@ -164,6 +181,7 @@ fun SettingsScreen(
             }
         }
     }
+}
 }
 
 @WearPreviewDevices

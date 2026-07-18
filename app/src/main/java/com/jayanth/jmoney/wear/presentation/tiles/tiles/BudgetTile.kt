@@ -17,6 +17,7 @@ import androidx.wear.protolayout.material.Typography
 import androidx.wear.protolayout.material.layouts.EdgeContentLayout
 import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import com.jayanth.jmoney.wear.presentation.tiles.utils.BudgetSpendingData
+import com.jayanth.jmoney.wear.presentation.tiles.utils.TileTheme
 import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
 
 class BudgetTile {
@@ -44,38 +45,26 @@ class BudgetTile {
                     .setContent(
                         Text.Builder(context, "Please log in on watch")
                             .setTypography(Typography.TYPOGRAPHY_BODY1)
-                            .setColor(ColorBuilders.argb(0xFFFFFFFF.toInt()))
+                            .setColor(ColorBuilders.argb(TileTheme.TEXT))
                             .build()
                     )
                     .build()
             }
 
             if (data == null) {
-                // Chip button — like alarm widget "Select Budget"
                 val chipClickable = ModifiersBuilders.Clickable.Builder()
                     .setId("select_budget_$configKey")
                     .setOnClick(launchAction)
                     .build()
 
-                val chipColors = ChipColors.primaryChipColors(
-                    Colors(0xFF2196F3.toInt(), 0xFFFFFFFF.toInt(), 0xFF1A1A1A.toInt(), 0xFF888888.toInt())
+                return ActionTileLayout.build(
+                    context = context,
+                    deviceParameters = deviceParameters,
+                    title = "Budget Tracker",
+                    buttonText = "Select Budget",
+                    buttonColor = TileTheme.PRIMARY,
+                    clickable = chipClickable
                 )
-
-                val chip = Chip.Builder(context, chipClickable, deviceParameters)
-                    .setPrimaryLabelContent("Select Budget")
-                    .setChipColors(chipColors)
-                    .setWidth(DimensionBuilders.wrap())
-                    .build()
-
-                return PrimaryLayout.Builder(deviceParameters)
-                    .setPrimaryLabelTextContent(
-                        Text.Builder(context, "Budget Tracker")
-                            .setTypography(Typography.TYPOGRAPHY_CAPTION1)
-                            .setColor(ColorBuilders.argb(0xFFAAAAAA.toInt()))
-                            .build()
-                    )
-                    .setContent(chip)
-                    .build()
             }
 
             // ── Configured: EdgeContentLayout ───────────────────────────────
@@ -83,9 +72,9 @@ class BudgetTile {
 
             // Color: green < 50%, blue 50-80%, red > 80% or overspent
             val indicatorColor = when {
-                data.isOverspent || pct > 0.8 -> 0xFFF44336.toInt()  // red
-                pct > 0.5                     -> 0xFF2196F3.toInt()  // blue
-                else                          -> 0xFF4CAF50.toInt()  // green
+                data.isOverspent || pct > 0.8 -> TileTheme.DANGER  // red
+                pct > 0.5                     -> TileTheme.PRIMARY  // light blue
+                else                          -> TileTheme.SUCCESS  // green
             }
 
             // Grey track background + colored progress
@@ -94,7 +83,7 @@ class BudgetTile {
                 .setCircularProgressIndicatorColors(
                     ProgressIndicatorColors(
                         ColorBuilders.argb(indicatorColor),
-                        ColorBuilders.argb(0xFF444444.toInt()) // grey track
+                        ColorBuilders.argb(TileTheme.CARD_BACKGROUND) // organic track
                     )
                 )
                 .build()
@@ -113,13 +102,13 @@ class BudgetTile {
                 .addContent(
                     Text.Builder(context, spentStr)
                         .setTypography(Typography.TYPOGRAPHY_TITLE2)
-                        .setColor(ColorBuilders.argb(0xFFFFFFFF.toInt()))
+                        .setColor(ColorBuilders.argb(TileTheme.TEXT))
                         .build()
                 )
                 .addContent(
                     Text.Builder(context, "of $limitStr")
                         .setTypography(Typography.TYPOGRAPHY_CAPTION2)
-                        .setColor(ColorBuilders.argb(0xFF888888.toInt()))
+                        .setColor(ColorBuilders.argb(TileTheme.TEXT_SECONDARY))
                         .build()
                 )
                 .setModifiers(
@@ -130,7 +119,7 @@ class BudgetTile {
                 .build()
 
             val truncatedName = if (data.name.length > 15) data.name.take(12) + "..." else data.name
-            val actualPct = (data.percentage * 100).toInt()  // not clamped — shows 109%, 200% etc.
+            val actualPct = (data.percentage * 100).toInt()
             val pctLabel = "$actualPct% used"
 
             return EdgeContentLayout.Builder(deviceParameters)
@@ -138,7 +127,7 @@ class BudgetTile {
                 .setPrimaryLabelTextContent(
                     Text.Builder(context, truncatedName)
                         .setTypography(Typography.TYPOGRAPHY_CAPTION1)
-                        .setColor(ColorBuilders.argb(0xFFFFFFFF.toInt()))
+                        .setColor(ColorBuilders.argb(TileTheme.TEXT))
                         .build()
                 )
                 .setContent(centerColumn)

@@ -29,8 +29,22 @@ import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 
-private val KEY_SIZE = 30.dp
-private val SPACING = 2.dp
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.filled.Check
+import androidx.wear.compose.material3.Icon
+
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.scale
+
+private val KEY_SIZE = 32.dp
+private val SPACING = 3.dp
 
 @Composable
 fun NumericKeypad(
@@ -48,27 +62,29 @@ fun NumericKeypad(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 40.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(SPACING)
         ) {
-            // Top action row: Close | DEL | OK — text buttons
+            // Top action row: Close | DEL | OK — icon buttons
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 ActionButton(
-                    text = "Close",
+                    icon = Icons.Filled.Close,
+                    contentDescription = "Close",
                     onClick = onBack,
                     color = MaterialTheme.colorScheme.errorContainer,
                     textColor = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.weight(1f)
                 )
                 ActionButton(
-                    text = "DEL",
+                    icon = Icons.AutoMirrored.Filled.Backspace,
+                    contentDescription = "Backspace",
                     onClick = {
                         val strValue = displayValue
                         if (strValue.isNotEmpty()) {
@@ -82,7 +98,8 @@ fun NumericKeypad(
                     modifier = Modifier.weight(1f)
                 )
                 ActionButton(
-                    text = "OK",
+                    icon = Icons.Filled.Check,
+                    contentDescription = "Confirm",
                     onClick = onConfirm,
                     color = MaterialTheme.colorScheme.primary,
                     textColor = MaterialTheme.colorScheme.onPrimary,
@@ -174,26 +191,43 @@ fun NumericKeypad(
 
 @Composable
 private fun ActionButton(
-    text: String,
+    icon: ImageVector,
+    contentDescription: String,
     onClick: () -> Unit,
     color: androidx.compose.ui.graphics.Color,
     textColor: androidx.compose.ui.graphics.Color,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val cornerRadius by animateDpAsState(
+        targetValue = if (isPressed) 6.dp else 13.dp,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+        label = "ActionShapeMorph"
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.92f else 1.0f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+        label = "ActionPressScale"
+    )
+
     Button(
         onClick = onClick,
+        interactionSource = interactionSource,
+        shape = RoundedCornerShape(cornerRadius),
         modifier = modifier
             .height(26.dp)
-            .clip(RoundedCornerShape(13.dp)),
+            .scale(scale),
         colors = ButtonDefaults.buttonColors(
             containerColor = color,
             contentColor = textColor
         )
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = TextAlign.Center
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.scale(0.85f)
         )
     }
 }
@@ -204,12 +238,28 @@ private fun KeypadButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val cornerRadius by animateDpAsState(
+        targetValue = if (isPressed) 6.dp else 16.dp, // Morphs from circle (16dp radius for 32dp size) to rounded rectangle (6dp radius)!
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+        label = "KeypadShapeMorph"
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.90f else 1.0f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+        label = "KeypadPressScale"
+    )
+
     Button(
         onClick = onClick,
+        interactionSource = interactionSource,
+        shape = RoundedCornerShape(cornerRadius),
         modifier = modifier
             .height(KEY_SIZE)
             .width(KEY_SIZE)
-            .clip(CircleShape),
+            .scale(scale),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer

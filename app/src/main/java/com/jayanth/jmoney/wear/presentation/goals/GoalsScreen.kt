@@ -25,16 +25,35 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
-import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
-import androidx.wear.compose.material3.Card
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.ScrollIndicator
+import com.jayanth.jmoney.wear.presentation.common.buttons.ExpressiveButton
+import com.jayanth.jmoney.wear.presentation.common.cards.ExpressiveCard
+import com.jayanth.jmoney.wear.presentation.common.progress.ExpressiveProgressBar
 import com.jayanth.jmoney.wear.presentation.common.loading.LoadingIndicator
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
 import com.jayanth.jmoney.wear.presentation.utils.formatRelativeTime
+
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.size
+import kotlinx.coroutines.launch
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.Icon
 
 @Composable
 fun GoalsScreen(
@@ -42,12 +61,15 @@ fun GoalsScreen(
 ) {
     val state by viewModel.goalsState.collectAsState()
     val listState = rememberTransformingLazyColumnState()
+    val coroutineScope = rememberCoroutineScope()
+    val showScrollToTop by remember {
+        derivedStateOf { listState.canScrollBackward }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         if (state.isLoading) {
@@ -57,16 +79,26 @@ fun GoalsScreen(
                 text = "No goals found",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
         } else {
-            TransformingLazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Header
-                item {
+            ScreenScaffold(
+                scrollState = listState,
+                scrollIndicator = {
+                    ScrollIndicator(state = listState)
+                }
+            ) { contentPadding ->
+                TransformingLazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    contentPadding = contentPadding,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Header
+                    item {
                     Text(
                         text = "Goals",
                         style = MaterialTheme.typography.titleMedium,
@@ -85,93 +117,79 @@ fun GoalsScreen(
                         MaterialTheme.colorScheme.primary
                     }
 
-                    Card(
-                        onClick = {},
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 6.dp)
+                    ExpressiveCard(
+                        onClick = {}
                     ) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = "🎯 ",
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                                Text(
-                                    text = item.goal.name,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    maxLines = 1,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "🎯 ",
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            Text(
+                                text = item.goal.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
 
-                            // Saved vs Target Stats
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text(
-                                        text = "Saved",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = formatCurrency(item.goal.currentAmount),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color(0xFF4ADE80) // Green saved amount
-                                    )
-                                }
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text(
-                                        text = "Target",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = formatCurrency(item.goal.goalAmount),
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Custom progress bar
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(fraction = Math.min(1.0f, (item.progressPercentage / 100.0).toFloat()))
-                                        .fillMaxHeight()
-                                        .background(progressColor)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
+                        // Saved vs Target Stats
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
                                 Text(
-                                    text = "${Math.round(item.progressPercentage)}% Saved",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = progressColor
-                                )
-                                Text(
-                                    text = if (isCompleted) "Completed" else "${formatCurrency(item.remaining)} left",
+                                    text = "Saved",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                                Text(
+                                    text = formatCurrency(item.goal.currentAmount),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFF4ADE80) // Green saved amount
+                                )
                             }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = "Target",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = formatCurrency(item.goal.goalAmount),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Expressive progress bar
+                        ExpressiveProgressBar(
+                            progress = (item.progressPercentage / 100.0).toFloat(),
+                            progressColor = progressColor,
+                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "${Math.round(item.progressPercentage)}% Saved",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = progressColor
+                            )
+                            Text(
+                                text = if (isCompleted) "Completed" else "${formatCurrency(item.remaining)} left",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -191,19 +209,15 @@ fun GoalsScreen(
                                     .padding(bottom = 4.dp)
                             )
                         } else {
-                            Button(
+                            ExpressiveButton(
                                 onClick = { viewModel.syncNow() },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                ),
+                                text = "Refresh",
+                                isPrimary = true,
+                                width = 120.dp,
+                                height = 40.dp,
+                                shape = ButtonDefaults.shape,
                                 modifier = Modifier.padding(bottom = 4.dp)
-                            ) {
-                                Text(
-                                    text = "Refresh Sync",
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
+                            )
                         }
                         Text(
                             text = formatRelativeTime(state.lastSyncTimestamp),
@@ -212,6 +226,36 @@ fun GoalsScreen(
                         )
                     }
                 }
+            }
+        }
+        }
+
+        AnimatedVisibility(
+            visible = showScrollToTop,
+            enter = fadeIn() + slideInVertically { it },
+            exit = fadeOut() + slideOutVertically { it },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp)
+        ) {
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(0)
+                    }
+                },
+                modifier = Modifier.size(36.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                shape = CircleShape
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowUpward,
+                    contentDescription = "Scroll to top",
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
