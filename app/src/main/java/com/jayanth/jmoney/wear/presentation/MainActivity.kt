@@ -34,11 +34,13 @@ import com.jayanth.jmoney.wear.presentation.budgets.BudgetsScreen
 import com.jayanth.jmoney.wear.presentation.goals.GoalsScreen
 import com.jayanth.jmoney.wear.presentation.settings.SettingsScreen
 import com.jayanth.jmoney.wear.presentation.dashboard.DashboardScreen
+import com.jayanth.jmoney.wear.presentation.transactions.TransactionsScreen
 import com.jayanth.jmoney.wear.presentation.dashboard.DashboardViewModel
 import com.jayanth.jmoney.wear.presentation.sync.SyncScreen
 import com.jayanth.jmoney.wear.presentation.theme.JmoneyTheme
 import com.jayanth.jmoney.wear.data.repository.SyncRepository
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.MaterialTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -82,65 +84,71 @@ fun WearApp(
     onConsumeAction: () -> Unit
 ) {
     JmoneyTheme {
-        val authState by loginViewModel.authState.collectAsState()
-        var hasSynced by remember { mutableStateOf(true) } // Default to true while loading
+        AppScaffold {
+            val authState by loginViewModel.authState.collectAsState()
+            var hasSynced by remember { mutableStateOf(true) } // Default to true while loading
 
-        LaunchedEffect(authState, hasSynced) {
-            if (authState is AuthState.Authenticated) {
-                hasSynced = syncRepository.hasSyncedBefore()
+            LaunchedEffect(authState, hasSynced) {
+                if (authState is AuthState.Authenticated) {
+                    hasSynced = syncRepository.hasSyncedBefore()
+                }
             }
-        }
 
-        when (authState) {
-            is AuthState.Authenticated -> {
-                if (!hasSynced) {
-                    SyncScreen(
-                        onSyncSuccess = {
-                            hasSynced = true
+            when (authState) {
+                is AuthState.Authenticated -> {
+                    if (!hasSynced) {
+                        SyncScreen(
+                            onSyncSuccess = {
+                                hasSynced = true
+                            }
+                        )
+                    } else {
+                        val pagerState = rememberPagerState(pageCount = { 5 })
+                        val coroutineScope = rememberCoroutineScope()
+                        var isOverlayOpen by remember { mutableStateOf(false) }
+
+                        // Only intercept back when not on page 0 — dashboard handles its own overlays
+                        BackHandler(enabled = pagerState.currentPage != 0) {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(0)
+                            }
                         }
+
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize(),
+                            userScrollEnabled = !isOverlayOpen
+                        ) { page ->
+                            when (page) {
+                                0 -> DashboardScreen(
+                                    initialAction = initialAction,
+                                    onConsumeAction = onConsumeAction,
+                                    onOverlayStateChanged = { isOverlayOpen = it }
+                                )
+                                1 -> TransactionsScreen()
+                                2 -> BudgetsScreen()
+                                3 -> GoalsScreen()
+                                4 -> SettingsScreen()
+                            }
+                        }
+                    }
+                }
+                is AuthState.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                else -> {
+                    LoginScreen(
+                        onLoginSuccess = {}, // Auth state changes will automatically trigger recomposition
+                        viewModel = loginViewModel
                     )
-                } else {
-                    val pagerState = rememberPagerState(pageCount = { 4 })
-                    val coroutineScope = rememberCoroutineScope()
-
-                    // Only intercept back when not on page 0 — dashboard handles its own overlays
-                    BackHandler(enabled = pagerState.currentPage != 0) {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(0)
-                        }
-                    }
-
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxSize()
-                    ) { page ->
-                        when (page) {
-                            0 -> DashboardScreen(
-                                initialAction = initialAction,
-                                onConsumeAction = onConsumeAction
-                            )
-                            1 -> BudgetsScreen()
-                            2 -> GoalsScreen()
-                            3 -> SettingsScreen()
-                        }
-                    }
                 }
-            }
-            is AuthState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            else -> {
-                LoginScreen(
-                    onLoginSuccess = {}, // Auth state changes will automatically trigger recomposition
-                    viewModel = loginViewModel
-                )
             }
         }
     }

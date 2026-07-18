@@ -22,14 +22,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
-import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.ButtonDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material3.CardDefaults
-import androidx.wear.compose.material3.Card
 import androidx.wear.compose.material3.CircularProgressIndicator
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.ScrollIndicator
+import com.jayanth.jmoney.wear.presentation.common.buttons.ExpressiveButton
+import com.jayanth.jmoney.wear.presentation.common.cards.ExpressiveCard
+import com.jayanth.jmoney.wear.presentation.common.progress.ExpressiveProgressBar
 import com.jayanth.jmoney.wear.presentation.common.loading.LoadingIndicator
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import com.jayanth.jmoney.wear.presentation.utils.formatCurrency
@@ -45,8 +48,7 @@ fun BudgetsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         if (state.isLoading) {
@@ -56,16 +58,26 @@ fun BudgetsScreen(
                 text = "No budgets found",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
         } else {
-            TransformingLazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Header
-                item {
+            ScreenScaffold(
+                scrollState = listState,
+                scrollIndicator = {
+                    ScrollIndicator(state = listState)
+                }
+            ) { contentPadding ->
+                TransformingLazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    contentPadding = contentPadding,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Header
+                    item {
                     Text(
                         text = "Budgets",
                         style = MaterialTheme.typography.titleMedium,
@@ -95,77 +107,42 @@ fun BudgetsScreen(
                         MaterialTheme.colorScheme.onSurface
                     }
 
-                    Card(
+                    ExpressiveCard(
                         onClick = {},
                         colors = CardDefaults.cardColors(
                             containerColor = cardContainerColor,
                             contentColor = cardContentColor
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 6.dp)
+                        )
                     ) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = item.budget.name,
-                                style = MaterialTheme.typography.titleSmall,
-                                maxLines = 1
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "${formatCurrency(item.spent)} of ${formatCurrency(item.budget.amount)}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isOverspent) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = item.budget.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "${formatCurrency(item.spent)} of ${formatCurrency(item.budget.amount)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isOverspent) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                            // Custom progress bar with Spent Progress and Today Indicator Line
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(
-                                        if (isOverspent) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                                    )
-                            ) {
-                                // Spent Progress
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(fraction = Math.min(1.0f, item.spentPercentage.toFloat()))
-                                        .fillMaxHeight()
-                                        .background(progressColor)
-                                )
+                        // Expressive Progress Bar
+                        ExpressiveProgressBar(
+                            progress = item.spentPercentage.toFloat(),
+                            progressColor = progressColor,
+                            trackColor = if (isOverspent) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                            todayProgress = if (item.isCurrentMonth) (item.todayProgress / 100.0).toFloat() else null
+                        )
 
-                                // Today Indicator Line (if current month selected)
-                                if (item.isCurrentMonth) {
-                                    val todayFraction = (item.todayProgress / 100.0).toFloat()
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.CenterStart)
-                                            .fillMaxWidth(fraction = todayFraction)
-                                            .fillMaxHeight()
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .align(Alignment.CenterEnd)
-                                                .width(2.dp)
-                                                .fillMaxHeight()
-                                                .background(if (isOverspent) Color.White else MaterialTheme.colorScheme.onSurface)
-                                        )
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = item.adviceText,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (isOverspent) Color.White else Color(0xFF4ADE80),
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Start
-                            )
-                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = item.adviceText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isOverspent) Color.White else Color(0xFF4ADE80),
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
                     }
                 }
 
@@ -184,19 +161,15 @@ fun BudgetsScreen(
                                     .padding(bottom = 4.dp)
                             )
                         } else {
-                            Button(
+                            ExpressiveButton(
                                 onClick = { viewModel.syncNow() },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                ),
+                                text = "Refresh",
+                                isPrimary = true,
+                                width = 120.dp,
+                                height = 40.dp,
+                                shape = ButtonDefaults.shape,
                                 modifier = Modifier.padding(bottom = 4.dp)
-                            ) {
-                                Text(
-                                    text = "Refresh Sync",
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
+                            )
                         }
                         Text(
                             text = formatRelativeTime(state.lastSyncTimestamp),
@@ -208,6 +181,7 @@ fun BudgetsScreen(
             }
         }
     }
+}
 }
 
 @WearPreviewDevices
