@@ -33,8 +33,8 @@ class CategorySync @Inject constructor(
                 supabaseClient.from("categories").upsert(payload)
                 categoryDao.updateSyncStatus(cat.id, 0)
             } catch (e: Exception) {
-                e.printStackTrace()
-            }
+                    throw e
+                }
         }
     }
 
@@ -57,8 +57,9 @@ class CategorySync @Inject constructor(
             )
         }
         db.withTransaction {
+            val pendingLocalChanges = categoryDao.getUnsyncedCategories(userId)
             categoryDao.deleteAllForUser(userId)
-            categoryDao.insertOrReplace(entities)
+            categoryDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }
