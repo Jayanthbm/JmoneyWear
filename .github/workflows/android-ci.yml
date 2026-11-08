@@ -9,16 +9,13 @@ on:
       - master
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 concurrency:
   group: android-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   verify:
-    name: Build, test and lint
+    name: Test and lint
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -52,25 +49,5 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Run unit tests, lint and assemble debug APK
-        run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
-
-      - name: Commit generated Room schema
-        if: success() && github.event_name != 'pull_request'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/schemas
-          if ! git diff --cached --quiet; then
-            git commit -m "chore(db): export Room schema [skip ci]"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: jmoneywear-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-          retention-days: 14
+      - name: Run unit tests and lint
+        run: ./gradlew --no-daemon testDebugUnitTest lintDebug
