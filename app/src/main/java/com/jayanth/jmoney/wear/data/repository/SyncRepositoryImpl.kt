@@ -75,7 +75,11 @@ class SyncRepositoryImpl @Inject constructor(
 
     override suspend fun runPartialSync(): Result<Unit> {
         val userId = authRepository.getCurrentUserId()
-            ?: return Result.failure(IllegalStateException("User not authenticated"))
+        if (userId == null) {
+            val error = IllegalStateException("User not authenticated")
+            _syncState.value = SyncState.Error(error.message ?: "User not authenticated")
+            return Result.failure(error)
+        }
         return runSync(userId, isPartial = true)
     }
 
