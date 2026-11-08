@@ -31,7 +31,7 @@ fun formatCurrency(amount: Double): String {
         }
         (groups + digits.takeLast(3)).joinToString(",")
     }
-    return "₹$sign$groupedInteger$fractionPart"
+    return "$sign₹$groupedInteger$fractionPart"
 }
 
 fun formatTransactionDate(dateStr: String): String {
