@@ -10,7 +10,6 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.serialization.Serializable
-import kotlinx.coroutines.CancellationException
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
@@ -52,18 +51,16 @@ class TransactionSync @Inject constructor(
                     latitude = tx.latitude,
                     longitude = tx.longitude
                 )
-                val uploadedTid = try {
-                    supabaseClient.from("transactions").upsert(payload) {
-                        select(Columns.list("tid"))
-                    }.decodeSingle<TidResponse>().tid
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (firstFailure: Exception) {
-                    // A write may have reached Postgres even if decoding the returned
-                    // representation failed. Retry idempotently, then read the server
-                    // cursor explicitly. Never mark the row clean without its real tid.
-                    try {
+                val uploadedTid = resolveTransactionUploadTid(
+                    upsertReturningTid = {
+                        supabaseClient.from("transactions").upsert(payload) {
+                            select(Columns.list("tid"))
+                        }.decodeSingle<TidResponse>().tid
+                    },
+                    retryUpsert = {
                         supabaseClient.from("transactions").upsert(payload)
+                    },
+                    readServerTid = {
                         supabaseClient.from("transactions").select(
                             columns = Columns.list("tid")
                         ) {
@@ -72,13 +69,8 @@ class TransactionSync @Inject constructor(
                                 eq("user_id", userId)
                             }
                         }.decodeSingle<TidResponse>().tid
-                    } catch (cancelled: CancellationException) {
-                        throw cancelled
-                    } catch (retryFailure: Exception) {
-                        retryFailure.addSuppressed(firstFailure)
-                        throw retryFailure
                     }
-                }
+                )
                 transactionDao.updateTidAndSyncStatus(tx.id, uploadedTid)
             }
         }
