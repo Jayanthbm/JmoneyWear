@@ -1,4 +1,5 @@
 [versions]
+junit = "4.13.2"
 agp = "9.5.1"
 playServicesWearable = "20.0.1"
 kotlin = "2.4.21"
@@ -23,6 +24,7 @@ wear-protolayout = "1.4.2"
 concurrent-futures = "1.2.0"
 
 [libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 ui = { group = "androidx.compose.ui", name = "ui" }
