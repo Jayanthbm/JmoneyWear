@@ -38,7 +38,12 @@ class SettingsViewModel @Inject constructor(
             userEmail = authRepository.getCurrentUserEmail(),
             lastSyncTimestamp = syncRepository.getLastSyncTimestamp(),
             isSyncing = syncState is SyncState.Syncing,
-            syncMessage = (syncState as? SyncState.Syncing)?.stage
+            syncMessage = when (syncState) {
+                is SyncState.Syncing -> syncState.stage
+                is SyncState.Error -> "Sync failed: ${syncState.message}"
+                SyncState.Success -> "Full sync completed"
+                SyncState.Idle -> null
+            }
         )
     }.stateIn(
         scope = viewModelScope,
@@ -51,8 +56,10 @@ class SettingsViewModel @Inject constructor(
 
     fun forceFullSync() {
         viewModelScope.launch {
-            syncRepository.runFullSync()
-            TileUpdateHelper.requestAllTileUpdates(context)
+            val result = syncRepository.runFullSync()
+            if (result.isSuccess) {
+                TileUpdateHelper.requestAllTileUpdates(context)
+            }
         }
     }
 
