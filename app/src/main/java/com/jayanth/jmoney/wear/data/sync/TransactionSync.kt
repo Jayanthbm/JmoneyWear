@@ -29,7 +29,10 @@ class TransactionSync @Inject constructor(
         val unsynced = transactionDao.getUnsyncedTransactions(userId)
         for (tx in unsynced) {
             if (tx.deleted == 1) {
-                performRemoteMutation(
+                performRemoteMutationIfUnchanged(
+                    snapshot = tx,
+                    readCurrent = { transactionDao.getById(tx.id) },
+
                     remoteMutation = {
                         supabaseClient.from("transactions").delete {
                             filter {
@@ -55,7 +58,10 @@ class TransactionSync @Inject constructor(
                     latitude = tx.latitude,
                     longitude = tx.longitude
                 )
-                performRemoteMutation(
+                performRemoteMutationIfUnchanged(
+                    snapshot = tx,
+                    readCurrent = { transactionDao.getById(tx.id) },
+
                     remoteMutation = {
                         resolveTransactionUploadTid(
                             upsertReturningTid = {
