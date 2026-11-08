@@ -82,12 +82,7 @@ class TransactionSync @Inject constructor(
             lastTid = transactionDao.getMaxTid(userId) ?: 0
         }
 
-        val chunkSize = 1000
-        var offset = 0
-        var hasMore = true
-        val remoteEntities = mutableListOf<TransactionEntity>()
-
-        while (hasMore) {
+        val remoteEntities = fetchCompleteRemoteSnapshot(pageSize = 1000) { offset, pageSize ->
             val response = supabaseClient.from("transactions").select(
                 columns = Columns.raw("""
                     id, amount, description, transaction_timestamp, category_id, payee_id, group_id, type, user_id, product_link, tid, latitude, longitude, created_at, updated_at,
@@ -101,47 +96,44 @@ class TransactionSync @Inject constructor(
                     gt("tid", lastTid)
                 }
                 order("tid", Order.ASCENDING)
-                range(offset.toLong(), (offset + chunkSize - 1).toLong())
+                range(offset.toLong(), (offset + pageSize - 1).toLong())
             }
 
-            val remoteTxList = response.decodeList<SupabaseTransaction>()
-            if (remoteTxList.isEmpty()) {
-                hasMore = false
-            } else {
-                val entities = remoteTxList.map { item ->
-                    TransactionEntity(
-                        id = item.id,
-                        amount = item.amount,
-                        description = item.description,
-                        transactionTimestamp = item.transactionTimestamp,
-                        date = getTransactionDate(item.transactionTimestamp),
-                        categoryId = item.categoryId,
-                        categoryName = item.categories?.name,
-                        categoryIcon = item.categories?.icon,
-                        categoryAppIcon = item.categories?.appIcon,
-                        payeeId = item.payeeId,
-                        payeeName = item.payees?.name,
-                        payeeLogo = item.payees?.logo,
-                        type = item.type,
-                        userId = item.userId,
-                        productLink = item.productLink,
-                        tid = item.tid,
-                        latitude = item.latitude,
-                        longitude = item.longitude,
-                        groupId = item.groupId,
-                        groupName = item.transactionGroups?.name,
-                        syncStatus = 0,
-                        createdAt = item.createdAt ?: Instant.now().toString(),
-                        updatedAt = item.updatedAt ?: Instant.now().toString()
-                    )
-                }
-                remoteEntities += entities
-                offset += remoteTxList.size
+            response.decodeList<SupabaseTransaction>().map { item ->
+                TransactionEntity(
+                    id = item.id,
+                    amount = item.amount,
+                    description = item.description,
+                    transactionTimestamp = item.transactionTimestamp,
+                    date = getTransactionDate(item.transactionTimestamp),
+                    categoryId = item.categoryId,
+                    categoryName = item.categories?.name,
+                    categoryIcon = item.categories?.icon,
+                    categoryAppIcon = item.categories?.appIcon,
+                    payeeId = item.payeeId,
+                    payeeName = item.payees?.name,
+                    payeeLogo = item.payees?.logo,
+                    type = item.type,
+                    userId = item.userId,
+                    productLink = item.productLink,
+                    tid = item.tid,
+                    latitude = item.latitude,
+                    longitude = item.longitude,
+                    groupId = item.groupId,
+                    groupName = item.transactionGroups?.name,
+                    syncStatus = 0,
+                    createdAt = item.createdAt ?: Instant.now().toString(),
+                    updatedAt = item.updatedAt ?: Instant.now().toString()
+                )
             }
         }
 
-        if (!isPartial && remoteEntities.isEmpty() && transactionDao.getTransactions(userId).isNotEmpty()) {
-            throw IllegalStateException("Remote transaction snapshot is empty while local transactions exist; refusing destructive replacement")
+        if (!isPartial) {
+            requireSafeRemoteSnapshot(
+                remoteCount = remoteEntities.size,
+                localCount = transactionDao.getTransactions(userId).size,
+                entityName = "transaction"
+            )
         }
 
         // Do not touch the local snapshot until every remote page has been fetched
