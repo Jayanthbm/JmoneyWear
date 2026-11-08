@@ -28,10 +28,9 @@ class PayeeSync @Inject constructor(
             )
             performRemoteMutationIfUnchanged(
                     snapshot = payee,
-                    readCurrent = { payeeDao.getById(payee.id) },
 
                 remoteMutation = { supabaseClient.from("payees").upsert(payload) },
-                acknowledgeLocal = { payeeDao.updateSyncStatus(payee.id, 0) }
+                acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> payeeDao.acknowledgeIfUnchanged(uploadedSnapshot) }
             )
         }
     }
