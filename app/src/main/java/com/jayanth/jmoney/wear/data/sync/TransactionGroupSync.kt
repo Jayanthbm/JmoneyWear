@@ -26,12 +26,10 @@ class TransactionGroupSync @Inject constructor(
                 userId = group.userId,
                 priority = group.priority
             )
-            try {
-                supabaseClient.from("transaction_groups").upsert(payload)
-                groupDao.updateSyncStatus(group.id, 0)
-            } catch (e: Exception) {
-                    throw e
-                }
+            performRemoteMutation(
+                remoteMutation = { supabaseClient.from("transaction_groups").upsert(payload) },
+                acknowledgeLocal = { groupDao.updateSyncStatus(group.id, 0) }
+            )
         }
     }
 
