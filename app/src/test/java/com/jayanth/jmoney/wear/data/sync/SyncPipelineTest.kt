@@ -19,7 +19,7 @@ class SyncPipelineTest {
         val thrown = assertThrows(IOException::class.java) {
             runBlocking {
                 executeSyncPipeline(
-                    onStage = stages::add,
+                    onStage = { stage -> stages.add(stage) },
                     pushLocalChanges = {
                         operations += "transaction-upload-succeeded"
                         operations += "category-upload"
@@ -53,7 +53,7 @@ class SyncPipelineTest {
         val thrown = assertThrows(IOException::class.java) {
             runBlocking {
                 executeSyncPipeline(
-                    onStage = stages::add,
+                    onStage = { stage -> stages.add(stage) },
                     pushLocalChanges = { operations += "push" },
                     syncTransactions = { operations += "transactions" },
                     syncCategories = {
@@ -83,7 +83,7 @@ class SyncPipelineTest {
         val operations = mutableListOf<String>()
 
         executeSyncPipeline(
-            onStage = stages::add,
+            onStage = { stage -> stages.add(stage) },
             pushLocalChanges = { operations += "push" },
             syncTransactions = { operations += "transactions" },
             syncCategories = { operations += "categories" },
