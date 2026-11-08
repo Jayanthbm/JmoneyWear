@@ -129,6 +129,10 @@ class TransactionSync @Inject constructor(
             }
         }
 
+        if (!isPartial && remoteEntities.isEmpty() && transactionDao.getTransactions(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote transaction snapshot is empty while local transactions exist; refusing destructive replacement")
+        }
+
         // Do not touch the local snapshot until every remote page has been fetched
         // and decoded successfully. Preserve pending local edits and tombstones.
         db.withTransaction {
