@@ -147,11 +147,10 @@ fun SettingsScreen(
                         text = "Force full sync",
                         isPrimary = true,
                         width = Dp.Unspecified,
-                        height = 48.dp,
-                        shape = ButtonDefaults.shape,
+                        height = 52.dp,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 4.dp)
+                            .padding(bottom = 6.dp)
                     )
                     state.syncMessage?.let { message ->
                         Text(
@@ -173,16 +172,17 @@ fun SettingsScreen(
 
             // Sign Out Action
             item {
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                     ExpressiveButton(
                         onClick = { viewModel.signOut() },
                         text = "Sign Out",
                         isPrimary = false,
                         enabled = !state.isSyncing,
-                        width = 140.dp,
-                        height = 40.dp,
-                        shape = ButtonDefaults.shape,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                        width = Dp.Unspecified,
+                        height = 52.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 6.dp)
                     )
             }
 

@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -372,10 +373,11 @@ fun DashboardScreen(
                             onClick = { viewModel.syncNow() },
                             text = "Refresh",
                             isPrimary = true,
-                            width = 120.dp,
-                            height = 40.dp,
-                            shape = ButtonDefaults.shape,
-                            modifier = Modifier.padding(bottom = 4.dp)
+                            width = Dp.Unspecified,
+                            height = 52.dp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                     Text(

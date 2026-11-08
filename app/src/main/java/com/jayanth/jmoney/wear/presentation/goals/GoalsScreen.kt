@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
@@ -213,10 +214,11 @@ fun GoalsScreen(
                                 onClick = { viewModel.syncNow() },
                                 text = "Refresh",
                                 isPrimary = true,
-                                width = 120.dp,
-                                height = 40.dp,
-                                shape = ButtonDefaults.shape,
-                                modifier = Modifier.padding(bottom = 4.dp)
+                                width = Dp.Unspecified,
+                                height = 52.dp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                         Text(
