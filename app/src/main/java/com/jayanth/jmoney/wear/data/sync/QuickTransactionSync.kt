@@ -26,7 +26,7 @@ class QuickTransactionSync @Inject constructor(
                     }
                     quickTransactionDao.delete(qt.id)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    throw e
                 }
             } else {
                 val payload = SupabaseQuickTransaction(
@@ -46,7 +46,7 @@ class QuickTransactionSync @Inject constructor(
                     supabaseClient.from("quick_transactions").upsert(payload)
                     quickTransactionDao.updateSyncStatus(qt.id, 0)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    throw e
                 }
             }
         }
@@ -75,8 +75,9 @@ class QuickTransactionSync @Inject constructor(
             )
         }
         db.withTransaction {
+            val pendingLocalChanges = quickTransactionDao.getUnsynced(userId)
             quickTransactionDao.deleteAllForUser(userId)
-            quickTransactionDao.insertOrReplace(entities)
+            quickTransactionDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }
