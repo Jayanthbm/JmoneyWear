@@ -40,8 +40,8 @@ android {
         applicationId = "com.jayanth.jmoney.wear"
         minSdk = 30
         targetSdk = 37
-        versionCode = (project.findProperty("app.versionCode") as? String)?.toInt() ?: 3
-        versionName = (project.findProperty("app.versionName") as? String) ?: "1.2.0"
+        versionCode = (project.findProperty("app.versionCode") as? String)?.toInt() ?: 7
+        versionName = (project.findProperty("app.versionName") as? String) ?: "2.1.0"
 
         val devEmail = localProperties.getProperty("dev.email") ?: ""
         val devPassword = localProperties.getProperty("dev.password") ?: ""
