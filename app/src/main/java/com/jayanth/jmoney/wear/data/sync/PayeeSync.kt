@@ -50,6 +50,10 @@ class PayeeSync @Inject constructor(
                 priority = item.priority
             )
         }
+        if (remoteList.isEmpty() && payeeDao.getPayees(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for payee is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
             val pendingLocalChanges = payeeDao.getUnsyncedPayees(userId)
             payeeDao.deleteAllForUser(userId)
