@@ -18,7 +18,7 @@ Modernize JmoneyWear in isolated, reviewable phases while preserving existing fi
 - Prefer stable releases over alpha/beta dependencies for the release build.
 - Record dependency/API decisions and migration notes in this document or linked docs.
 - Report what was changed, what was built/tested, and anything the owner must verify on the watch.
-- Do not request physical-watch testing or owner sign-off between phases. Complete all implementation phases first; reserve the owner's watch testing for Phase 6 only.
+- Do not request Wear OS emulator testing or owner sign-off between phases. Complete all implementation phases first; reserve the owner's watch testing for Phase 6 only.
 - Do not claim a build or device test passed unless it was actually run.
 
 ## Phase 0 — Baseline and planning
@@ -139,16 +139,16 @@ The earlier destructive-refresh, swallowed-upload-error, and unsynchronized-sync
 
 - 2026-11-08: Created `feature/wear-modernization-2026` from `master`.
 - 2026-11-08: Added this phased modernization plan. No application source code, production credentials, or runtime behavior changed.
-- 2026-11-08: Owner confirmed implementation should proceed through all phases without intermediate physical-watch testing. Physical-watch testing is reserved for the final consolidated release-candidate stage.
-- 2026-11-08: Phase 1 implementation started: AGP 9.3.1, Gradle 9.7.0, Kotlin 2.4.21, Compose BOM 2026.09.00, Wear Compose 1.7.1, Room 2.8.5, WorkManager 2.12.0, Lifecycle 2.11.0, Wear Tiles 1.6.2, ProtoLayout 1.4.2, compileSdk/targetSdk 37, Java 17, version 2.1.0 (code 7). CI build verification pending.
-- 2026-11-08: Phase 2 source changes committed for safer remote refresh, pending-change preservation, failure propagation, empty-snapshot guards, and sync serialization. Automated verification pending.
+- 2026-11-08: Owner confirmed implementation should proceed through all phases without intermediate Wear OS emulator testing. Wear OS emulator testing is reserved for the final consolidated release-candidate stage.
+- 2026-11-08: Phase 1 implementation started: AGP 9.3.1, Gradle 9.7.0, Kotlin 2.4.21, Compose BOM 2026.09.00, Wear Compose 1.7.1, Room 2.8.5, WorkManager 2.12.0, Lifecycle 2.11.0, Wear Tiles 1.6.2, ProtoLayout 1.4.2, compileSdk/targetSdk 37, Java 17, version 2.1.0 (code 7). CI build verification subsequently passed in run `42458702990`.
+- 2026-11-08: Phase 2 source changes committed for safer remote refresh, pending-change preservation, failure propagation, empty-snapshot guards, and sync serialization. Initial automated verification subsequently passed in run `42458702990`; additional failure-injection coverage remains.
 - 2026-11-08: Phase 3 initial theme update committed for watch-face dynamic colors and expressive motion. Full UI audit remains.
 - 2026-11-08: Added GitHub Actions Android CI workflow and initial JUnit formatting tests. Initial CI attempt exposed the removed legacy SDK `tools` package in setup-android@v3; workflow was corrected to setup-android@v4 with platform-tools only.
-- 2026-11-08: Adjusted AGP/Gradle from the newest available line to AGP 9.3.1 + Gradle 9.7.0 to stay within Kotlin 2.4.21's published fully-supported compatibility matrix. Final CI verification pending.
+- 2026-11-08: Adjusted AGP/Gradle from the newest available line to AGP 9.3.1 + Gradle 9.7.0 to stay within Kotlin 2.4.21's published fully-supported compatibility matrix. Final CI verification subsequently passed in run `42458702990`.
 - 2026-11-08: CI exposed Android 17 platform's package name as `platforms;android-37.0`; workflow now installs that exact package and creates the expected `android-37` SDK alias for AGP compatibility.
 - 2026-11-08: Added the Wear Material 3 HorizontalPagerScaffold and page indicator to the app's five main pages.
 
-- 2026-11-08: Reliability follow-up: tile data access now restores the persisted Supabase session on demand under a mutex before resolving the current user. Updated tile fallback text, improved Settings full-sync button sizing and status feedback, and refreshes tiles only after successful full sync. Credentials and auth values remain unchanged. CI verification pending.
+- 2026-11-08: Reliability follow-up: tile data access now restores the persisted Supabase session on demand under a mutex before resolving the current user. Updated tile fallback text, improved Settings full-sync button sizing and status feedback, and refreshes tiles only after successful full sync. Credentials and auth values remain unchanged. CI verification subsequently passed in run `42458702990`.
 
 - 2026-11-08: Owner confirmed they plan to run the final consolidated checks on a Wear OS emulator later today. No intermediate device testing is requested; implementation and automated verification continue on this branch first.
 
