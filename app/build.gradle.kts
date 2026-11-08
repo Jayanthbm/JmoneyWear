@@ -11,7 +11,7 @@ plugins {
 
 android {
     namespace = "com.jayanth.jmoney.wear"
-    compileSdk = 36
+    compileSdk = 37
 
     // Load development credentials from local.properties
     val localProperties = Properties()
@@ -39,7 +39,7 @@ android {
     defaultConfig {
         applicationId = "com.jayanth.jmoney.wear"
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
         versionCode = (project.findProperty("app.versionCode") as? String)?.toInt() ?: 3
         versionName = (project.findProperty("app.versionName") as? String) ?: "1.2.0"
 
