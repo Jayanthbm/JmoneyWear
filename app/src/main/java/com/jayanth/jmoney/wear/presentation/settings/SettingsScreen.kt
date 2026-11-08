@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
@@ -143,14 +144,30 @@ fun SettingsScreen(
                 } else {
                     ExpressiveButton(
                         onClick = { viewModel.forceFullSync() },
-                        text = "Force Full Sync",
-                        isPrimary = false,
-                        isError = true,
-                        width = 140.dp,
-                        height = 40.dp,
+                        text = "Force full sync",
+                        isPrimary = true,
+                        width = Dp.Unspecified,
+                        height = 48.dp,
                         shape = ButtonDefaults.shape,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp)
                     )
+                    state.syncMessage?.let { message ->
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (message.startsWith("Sync failed")) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
 
