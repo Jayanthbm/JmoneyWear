@@ -81,7 +81,7 @@ Debug APK output:
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-A GitHub Actions workflow at `.github/workflows/android-ci.yml` runs unit tests, lint, and debug APK assembly on pushes to the modernization branch. Successful runs upload a short-lived debug APK artifact.
+A GitHub Actions workflow at `.github/workflows/android-ci.yml` runs unit tests and lint on pushes to the modernization branch. It does not assemble or upload debug APKs; generate the installable APK locally when preparing for emulator testing.
 
 ## Versioning
 
@@ -95,6 +95,6 @@ The version is controlled by `app.versionCode` and `app.versionName` in `gradle.
 - Database schema changes require a version increment and a tested Room migration; do not use destructive migration fallbacks.
 - Full physical-watch regression testing is reserved for the final consolidated release candidate in the modernization workflow.
 
-## CI artifacts
+## CI
 
-Open the repository's **Actions → Android CI** workflow, select a successful run, and download the `jmoneywear-debug-apk` artifact. Artifacts are retained for 14 days. A GitHub Actions debug APK is signed with the runner's temporary debug key and may not install as an update over an APK signed with your local debug key. For a data-preserving in-place update, build locally using the same signing key as the installed app. Do not uninstall the existing app merely to work around a signature mismatch, because that can erase local-only Room data.
+CI is verification-only: it runs unit tests and lint. No APK artifact is generated or uploaded by GitHub Actions. Build the emulator APK locally with `./gradlew --no-daemon assembleDebug`; output is `app/build/outputs/apk/debug/app-debug.apk`. Use the same local signing key as the installed app for an in-place update, and do not uninstall the app to work around a signing mismatch because that can erase local-only Room data.
