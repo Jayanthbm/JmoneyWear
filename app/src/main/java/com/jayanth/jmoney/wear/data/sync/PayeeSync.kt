@@ -30,8 +30,8 @@ class PayeeSync @Inject constructor(
                 supabaseClient.from("payees").upsert(payload)
                 payeeDao.updateSyncStatus(payee.id, 0)
             } catch (e: Exception) {
-                e.printStackTrace()
-            }
+                    throw e
+                }
         }
     }
 
@@ -51,8 +51,9 @@ class PayeeSync @Inject constructor(
             )
         }
         db.withTransaction {
+            val pendingLocalChanges = payeeDao.getUnsyncedPayees(userId)
             payeeDao.deleteAllForUser(userId)
-            payeeDao.insertOrReplace(entities)
+            payeeDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }
