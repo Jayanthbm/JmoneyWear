@@ -44,7 +44,7 @@ Modernize JmoneyWear in isolated, reviewable phases while preserving existing fi
 - Build after each logical upgrade group and resolve deprecations or breaking API changes.
 - Update dependency catalog and document compatibility decisions.
 
-**Selected stable baseline (2026-11-08):** Android 17 API 37 (compileSdk/targetSdk 37); Android Gradle Plugin 9.5.1; Gradle 9.9.0; Kotlin 2.4.21; Compose BOM 2026.09.00; Wear Compose libraries 1.7.1; Room 2.8.5; WorkManager 2.12.0; Lifecycle 2.11.0; Wear Tiles 1.6.2; ProtoLayout 1.4.2. Java source/target compatibility is 17. These choices are based on current Android/Jetpack release documentation and remain subject to CI compatibility verification. The app's minSdk remains 30.
+**Selected stable baseline (2026-11-08):** Android 17 API 37 (compileSdk/targetSdk 37); Android Gradle Plugin 9.3.1; Gradle 9.7.0; Kotlin 2.4.21; Compose BOM 2026.09.00; Wear Compose libraries 1.7.1; Room 2.8.5; WorkManager 2.12.0; Lifecycle 2.11.0; Wear Tiles 1.6.2; ProtoLayout 1.4.2. Java source/target compatibility is 17. These choices prioritize the published Kotlin 2.4.21 compatibility ceiling (AGP up to 9.3.1 and Gradle up to 9.7.0) while retaining API 37 support. They remain subject to CI verification. The app's minSdk remains 30.
 
 **Implementation status:** dependency catalog, Gradle wrapper, SDK levels, Java compatibility, and version metadata have been upgraded. CI verification is pending. App version is now 2.1.0 (versionCode 7). Existing credential-related code and build configuration were not modified.
 
@@ -131,7 +131,8 @@ Priority: critical.
 - 2026-11-08: Created `feature/wear-modernization-2026` from `master`.
 - 2026-11-08: Added this phased modernization plan. No application source code, production credentials, or runtime behavior changed.
 - 2026-11-08: Owner confirmed implementation should proceed through all phases without intermediate physical-watch testing. Physical-watch testing is reserved for the final consolidated release-candidate stage.
-- 2026-11-08: Phase 1 implementation started: AGP 9.5.1, Gradle 9.9.0, Kotlin 2.4.21, Compose BOM 2026.09.00, Wear Compose 1.7.1, Room 2.8.5, WorkManager 2.12.0, Lifecycle 2.11.0, Wear Tiles 1.6.2, ProtoLayout 1.4.2, compileSdk/targetSdk 37, Java 17, version 2.1.0 (code 7). CI build verification pending.
+- 2026-11-08: Phase 1 implementation started: AGP 9.3.1, Gradle 9.7.0, Kotlin 2.4.21, Compose BOM 2026.09.00, Wear Compose 1.7.1, Room 2.8.5, WorkManager 2.12.0, Lifecycle 2.11.0, Wear Tiles 1.6.2, ProtoLayout 1.4.2, compileSdk/targetSdk 37, Java 17, version 2.1.0 (code 7). CI build verification pending.
 - 2026-11-08: Phase 2 source changes committed for safer remote refresh, pending-change preservation, failure propagation, empty-snapshot guards, and sync serialization. Automated verification pending.
 - 2026-11-08: Phase 3 initial theme update committed for watch-face dynamic colors and expressive motion. Full UI audit remains.
-- 2026-11-08: Added GitHub Actions Android CI workflow and initial JUnit formatting tests. CI results pending.
+- 2026-11-08: Added GitHub Actions Android CI workflow and initial JUnit formatting tests. Initial CI attempt exposed the removed legacy SDK `tools` package in setup-android@v3; workflow was corrected to setup-android@v4 with platform-tools only.
+- 2026-11-08: Adjusted AGP/Gradle from the newest available line to AGP 9.3.1 + Gradle 9.7.0 to stay within Kotlin 2.4.21's published fully-supported compatibility matrix. Final CI verification pending.
