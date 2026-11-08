@@ -28,7 +28,7 @@ class BudgetSync @Inject constructor(
                     }
                     budgetDao.delete(b.id)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    throw e
                 }
             } else {
                 val catList = try {
@@ -50,7 +50,7 @@ class BudgetSync @Inject constructor(
                     supabaseClient.from("budgets").upsert(payload)
                     budgetDao.updateSyncStatus(b.id, 0)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    throw e
                 }
             }
         }
@@ -81,8 +81,9 @@ class BudgetSync @Inject constructor(
             )
         }
         db.withTransaction {
+            val pendingLocalChanges = budgetDao.getUnsyncedBudgets(userId)
             budgetDao.deleteAllForUser(userId)
-            budgetDao.insertOrReplace(entities)
+            budgetDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }
