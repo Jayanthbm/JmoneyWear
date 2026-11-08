@@ -22,7 +22,10 @@ class BudgetSync @Inject constructor(
         val unsynced = budgetDao.getUnsyncedBudgets(userId)
         for (b in unsynced) {
             if (b.deleted == 1) {
-                performRemoteMutation(
+                performRemoteMutationIfUnchanged(
+                    snapshot = b,
+                    readCurrent = { budgetDao.getById(b.id) },
+
                     remoteMutation = {
                         supabaseClient.from("budgets").delete {
                             filter {
@@ -49,7 +52,10 @@ class BudgetSync @Inject constructor(
                     categories = catList,
                     userId = b.userId
                 )
-                performRemoteMutation(
+                performRemoteMutationIfUnchanged(
+                    snapshot = b,
+                    readCurrent = { budgetDao.getById(b.id) },
+
                     remoteMutation = { supabaseClient.from("budgets").upsert(payload) },
                     acknowledgeLocal = { budgetDao.updateSyncStatus(b.id, 0) }
                 )
