@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
+    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): TransactionEntity?
+
     @Query("SELECT * FROM transactions WHERE user_id = :userId AND deleted = 0 ORDER BY transaction_timestamp DESC")
     fun getTransactionsFlow(userId: String): Flow<List<TransactionEntity>>
 
@@ -68,6 +71,9 @@ interface TransactionDao {
 
 @Dao
 interface CategoryDao {
+    @Query("SELECT * FROM categories WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): CategoryEntity?
+
     @Query("SELECT * FROM categories WHERE user_id = :userId ORDER BY priority, name")
     fun getCategoriesFlow(userId: String): Flow<List<CategoryEntity>>
 
@@ -89,6 +95,9 @@ interface CategoryDao {
 
 @Dao
 interface PayeeDao {
+    @Query("SELECT * FROM payees WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): PayeeEntity?
+
     @Query("SELECT * FROM payees WHERE user_id = :userId ORDER BY priority, name")
     fun getPayeesFlow(userId: String): Flow<List<PayeeEntity>>
 
@@ -110,6 +119,9 @@ interface PayeeDao {
 
 @Dao
 interface QuickTransactionDao {
+    @Query("SELECT * FROM quick_transactions WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): QuickTransactionEntity?
+
     @Query("SELECT * FROM quick_transactions WHERE user_id = :userId AND deleted = 0 ORDER BY priority ASC, name")
     fun getQuickTransactionsFlow(userId: String): Flow<List<QuickTransactionEntity>>
 
@@ -137,6 +149,9 @@ interface QuickTransactionDao {
 
 @Dao
 interface BudgetDao {
+    @Query("SELECT * FROM budgets WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): BudgetEntity?
+
     @Query("SELECT * FROM budgets WHERE user_id = :userId AND deleted = 0 ORDER BY name")
     fun getBudgetsFlow(userId: String): Flow<List<BudgetEntity>>
 
@@ -164,6 +179,9 @@ interface BudgetDao {
 
 @Dao
 interface GoalDao {
+    @Query("SELECT * FROM goals WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): GoalEntity?
+
     @Query("SELECT * FROM goals WHERE user_id = :userId AND deleted = 0 ORDER BY name")
     fun getGoalsFlow(userId: String): Flow<List<GoalEntity>>
 
@@ -191,6 +209,9 @@ interface GoalDao {
 
 @Dao
 interface TransactionGroupDao {
+    @Query("SELECT * FROM transaction_groups WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): TransactionGroupEntity?
+
     @Query("SELECT * FROM transaction_groups WHERE user_id = :userId ORDER BY priority")
     fun getGroupsFlow(userId: String): Flow<List<TransactionGroupEntity>>
 
