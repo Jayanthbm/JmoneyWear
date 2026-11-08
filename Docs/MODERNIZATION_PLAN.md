@@ -79,7 +79,7 @@ Priority: critical.
 - Refresh tiles and complications to match the app theme and current Wear OS conventions.
 - Preserve all existing finance workflows and avoid introducing unnecessary navigation depth.
 
-**Implementation status:** the theme now uses watch-face dynamic color when available, with the existing brand palette as fallback, and enables Wear Material 3 expressive motion. The app already used Wear Material 3 Expressive components from its previous design migration; a full screen/tile audit and refinements remain.
+**Implementation status:** the theme now uses watch-face dynamic color when available, with the existing brand palette as fallback, and enables Wear Material 3 expressive motion. The app already used Wear Material 3 Expressive components from its previous design migration; the pager was migrated to the Wear-specific pager state. Settings full-sync action has been resized to use the available screen width and now reports progress/result. Tile fallback messages no longer incorrectly ask the user to log in.
 
 **Exit criteria:** all key screens and tiles use a coherent Wear-first design; screenshot review across supported emulator sizes where tooling permits; accessibility/contrast and interaction regression checklist completed. Owner's physical-watch testing remains deferred to Phase 6.
 
@@ -93,11 +93,16 @@ Priority: critical.
 - Review manifest permissions and remove only permissions proven unnecessary.
 - Improve README with setup, architecture, build, testing, and troubleshooting instructions.
 
-**Implementation status:** added a GitHub Actions workflow for unit tests, lint, debug APK assembly and artifact upload; added initial JUnit tests for formatting helpers. Broader sync tests, Room schema export and migration work remain.
+**Implementation status:** added a GitHub Actions workflow for unit tests, lint, debug APK assembly and artifact upload; added initial JUnit tests for formatting helpers; enabled Room schema export. Broader sync tests and migration coverage remain. Settings full-sync feedback and Wear tile session restoration are included in the current reliability pass.
 
 **Exit criteria:** meaningful automated coverage for critical paths, schema/migration baseline committed, and no known high-risk static-review findings left unexplained.
 
 ## Phase 5 — Wear OS UX, performance, and reliability
+
+- Ensure tile services can restore the persisted Supabase session when Wear OS binds a tile before the main activity has started; do not interpret an uninitialized in-memory session as signed out.
+- Serialize concurrent tile-triggered session restoration and use the authenticated user scope for all tile DAO reads.
+- Keep tile fallback copy actionable and avoid misleading login prompts when the session is simply not initialized yet.
+- Make manual full sync observable in Settings: clear progress, success/failure feedback, and tile refresh only after a successful sync.
 
 - Review startup time, memory, battery use, background sync behavior, and tile update frequency.
 - Verify navigation, scroll-to-top controls, loading states, offline mode, empty data, and error recovery.
@@ -138,3 +143,5 @@ Priority: critical.
 - 2026-11-08: Adjusted AGP/Gradle from the newest available line to AGP 9.3.1 + Gradle 9.7.0 to stay within Kotlin 2.4.21's published fully-supported compatibility matrix. Final CI verification pending.
 - 2026-11-08: CI exposed Android 17 platform's package name as `platforms;android-37.0`; workflow now installs that exact package and creates the expected `android-37` SDK alias for AGP compatibility.
 - 2026-11-08: Added the Wear Material 3 HorizontalPagerScaffold and page indicator to the app's five main pages.
+
+- 2026-11-08: Reliability follow-up: tile data access now restores the persisted Supabase session on demand under a mutex before resolving the current user. Updated tile fallback text, improved Settings full-sync button sizing and status feedback, and refreshes tiles only after successful full sync. Credentials and auth values remain unchanged. CI verification pending.
