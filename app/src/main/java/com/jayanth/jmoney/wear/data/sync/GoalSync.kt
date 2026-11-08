@@ -22,7 +22,6 @@ class GoalSync @Inject constructor(
             if (g.deleted == 1) {
                 performRemoteMutationIfUnchanged(
                     snapshot = g,
-                    readCurrent = { goalDao.getById(g.id) },
 
                     remoteMutation = {
                         supabaseClient.from("goals").delete {
@@ -32,7 +31,7 @@ class GoalSync @Inject constructor(
                             }
                         }
                     },
-                    acknowledgeLocal = { goalDao.delete(g.id) }
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> goalDao.deleteIfUnchanged(uploadedSnapshot) }
                 )
             } else {
                 val payload = SupabaseGoal(
@@ -45,10 +44,9 @@ class GoalSync @Inject constructor(
                 )
                 performRemoteMutationIfUnchanged(
                     snapshot = g,
-                    readCurrent = { goalDao.getById(g.id) },
 
                     remoteMutation = { supabaseClient.from("goals").upsert(payload) },
-                    acknowledgeLocal = { goalDao.updateSyncStatus(g.id, 0) }
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> goalDao.acknowledgeIfUnchanged(uploadedSnapshot) }
                 )
             }
         }
