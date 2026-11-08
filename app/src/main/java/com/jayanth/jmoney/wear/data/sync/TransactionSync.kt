@@ -10,6 +10,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.serialization.Serializable
+import kotlinx.coroutines.CancellationException
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
@@ -28,14 +29,13 @@ class TransactionSync @Inject constructor(
         val unsynced = transactionDao.getUnsyncedTransactions(userId)
         for (tx in unsynced) {
             if (tx.deleted == 1) {
-                try {
-                    supabaseClient.from("transactions").delete {
-                        filter { eq("id", tx.id) }
+                supabaseClient.from("transactions").delete {
+                    filter {
+                        eq("id", tx.id)
+                        eq("user_id", userId)
                     }
-                    transactionDao.delete(tx.id)
-                } catch (e: Exception) {
-                    throw e
                 }
+                transactionDao.delete(tx.id)
             } else {
                 val payload = SupabaseTransaction(
                     id = tx.id,
@@ -52,15 +52,34 @@ class TransactionSync @Inject constructor(
                     latitude = tx.latitude,
                     longitude = tx.longitude
                 )
-                try {
-                    val result = supabaseClient.from("transactions").upsert(payload) {
+                val uploadedTid = try {
+                    supabaseClient.from("transactions").upsert(payload) {
                         select(Columns.list("tid"))
-                    }.decodeSingle<TidResponse>()
-                    transactionDao.updateTidAndSyncStatus(tx.id, result.tid)
-                } catch (e: Exception) {
-                    supabaseClient.from("transactions").upsert(payload)
-                    transactionDao.updateSyncStatus(tx.id, 0)
+                    }.decodeSingle<TidResponse>().tid
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (firstFailure: Exception) {
+                    // A write may have reached Postgres even if decoding the returned
+                    // representation failed. Retry idempotently, then read the server
+                    // cursor explicitly. Never mark the row clean without its real tid.
+                    try {
+                        supabaseClient.from("transactions").upsert(payload)
+                        supabaseClient.from("transactions").select(
+                            columns = Columns.list("tid")
+                        ) {
+                            filter {
+                                eq("id", tx.id)
+                                eq("user_id", userId)
+                            }
+                        }.decodeSingle<TidResponse>().tid
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (retryFailure: Exception) {
+                        retryFailure.addSuppressed(firstFailure)
+                        throw retryFailure
+                    }
                 }
+                transactionDao.updateTidAndSyncStatus(tx.id, uploadedTid)
             }
         }
     }
