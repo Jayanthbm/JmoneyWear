@@ -64,6 +64,10 @@ class GoalSync @Inject constructor(
                 deleted = 0
             )
         }
+        if (remoteList.isEmpty() && goalDao.getGoals(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for goal is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
             val pendingLocalChanges = goalDao.getUnsyncedGoals(userId)
             goalDao.deleteAllForUser(userId)
