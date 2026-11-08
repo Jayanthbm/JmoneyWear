@@ -22,14 +22,17 @@ class BudgetSync @Inject constructor(
         val unsynced = budgetDao.getUnsyncedBudgets(userId)
         for (b in unsynced) {
             if (b.deleted == 1) {
-                try {
-                    supabaseClient.from("budgets").delete {
-                        filter { eq("id", b.id) }
-                    }
-                    budgetDao.delete(b.id)
-                } catch (e: Exception) {
-                    throw e
-                }
+                performRemoteMutation(
+                    remoteMutation = {
+                        supabaseClient.from("budgets").delete {
+                            filter {
+                                eq("id", b.id)
+                                eq("user_id", userId)
+                            }
+                        }
+                    },
+                    acknowledgeLocal = { budgetDao.delete(b.id) }
+                )
             } else {
                 val catList = try {
                     Json.decodeFromString<List<String>>(b.categories)
@@ -46,12 +49,10 @@ class BudgetSync @Inject constructor(
                     categories = catList,
                     userId = b.userId
                 )
-                try {
-                    supabaseClient.from("budgets").upsert(payload)
-                    budgetDao.updateSyncStatus(b.id, 0)
-                } catch (e: Exception) {
-                    throw e
-                }
+                performRemoteMutation(
+                    remoteMutation = { supabaseClient.from("budgets").upsert(payload) },
+                    acknowledgeLocal = { budgetDao.updateSyncStatus(b.id, 0) }
+                )
             }
         }
     }
