@@ -23,7 +23,7 @@ Modernize JmoneyWear in isolated, reviewable phases while preserving existing fi
 
 ## Phase 0 — Baseline and planning
 
-**Status: Planning recorded; branch created.**
+**Status: Baseline captured; implementation underway.**
 
 - Record current project versions, module structure, SDK configuration, dependencies, manifest capabilities, and current build/test status.
 - Identify all sync flows and data replacement/deletion paths before changing them.
@@ -44,7 +44,9 @@ Modernize JmoneyWear in isolated, reviewable phases while preserving existing fi
 - Build after each logical upgrade group and resolve deprecations or breaking API changes.
 - Update dependency catalog and document compatibility decisions.
 
-**Initial research baseline (verify again immediately before implementation):** Android 16 is API 36; current Google Play guidance distinguishes Wear OS apps from phone apps and lists API 35 as the Wear OS target requirement for new submissions from 31 August 2026. Compose BOM 2026.09.00 is documented; Compose Material 3 stable 1.4.0 is listed, while Wear Compose Material 3 has its own release line and must be checked independently. Android Gradle Plugin 9.5.0 is listed, with Gradle 9.6.0 minimum; Gradle 9.9.0 is available. These are research candidates, not a promise to upgrade to all of them without compatibility checks.
+**Selected stable baseline (2026-11-08):** Android 17 API 37 (compileSdk/targetSdk 37); Android Gradle Plugin 9.5.1; Gradle 9.9.0; Kotlin 2.4.21; Compose BOM 2026.09.00; Wear Compose libraries 1.7.1; Room 2.8.5; WorkManager 2.12.0; Lifecycle 2.11.0; Wear Tiles 1.6.2; ProtoLayout 1.4.2. Java source/target compatibility is 17. These choices are based on current Android/Jetpack release documentation and remain subject to CI compatibility verification. The app's minSdk remains 30.
+
+**Implementation status:** dependency catalog, Gradle wrapper, SDK levels, Java compatibility, and version metadata have been upgraded. CI verification is pending. App version is now 2.1.0 (versionCode 7). Existing credential-related code and build configuration were not modified.
 
 **Exit criteria:** clean Gradle sync and successful debug build; dependency matrix documented; no intentional product behavior changes.
 
@@ -62,6 +64,8 @@ Priority: critical.
 - Review retry/backoff, per-user scoping, sign-out behavior, and immediate sync after local writes.
 - Add focused unit/integration tests using fakes or an isolated test database; never use production data for destructive tests.
 
+**Implementation status:** transaction full refresh now fetches and decodes the remote pages before local replacement, preserves pending local edits/tombstones, and refuses suspicious empty snapshots when local data exists. Other entity sync refreshes preserve pending local changes and refuse suspicious empty snapshots. Upload failures now propagate; sync and local reset operations are serialized. Automated verification remains pending.
+
 **Exit criteria:** tests demonstrate that network failures, partial failures, and overlapping sync requests do not lose local changes; normal sync behavior remains intact.
 
 ## Phase 3 — Wear OS Material You / Material 3 Expressive redesign
@@ -75,6 +79,8 @@ Priority: critical.
 - Refresh tiles and complications to match the app theme and current Wear OS conventions.
 - Preserve all existing finance workflows and avoid introducing unnecessary navigation depth.
 
+**Implementation status:** the theme now uses watch-face dynamic color when available, with the existing brand palette as fallback, and enables Wear Material 3 expressive motion. The app already used Wear Material 3 Expressive components from its previous design migration; a full screen/tile audit and refinements remain.
+
 **Exit criteria:** all key screens and tiles use a coherent Wear-first design; screenshot review across supported emulator sizes where tooling permits; accessibility/contrast and interaction regression checklist completed. Owner's physical-watch testing remains deferred to Phase 6.
 
 ## Phase 4 — Architecture, maintainability, and quality
@@ -86,6 +92,8 @@ Priority: critical.
 - Review lifecycle handling, coroutine cancellation, state restoration, and resource use.
 - Review manifest permissions and remove only permissions proven unnecessary.
 - Improve README with setup, architecture, build, testing, and troubleshooting instructions.
+
+**Implementation status:** added a GitHub Actions workflow for unit tests, lint, debug APK assembly and artifact upload; added initial JUnit tests for formatting helpers. Broader sync tests, Room schema export and migration work remain.
 
 **Exit criteria:** meaningful automated coverage for critical paths, schema/migration baseline committed, and no known high-risk static-review findings left unexplained.
 
@@ -123,3 +131,7 @@ Priority: critical.
 - 2026-11-08: Created `feature/wear-modernization-2026` from `master`.
 - 2026-11-08: Added this phased modernization plan. No application source code, production credentials, or runtime behavior changed.
 - 2026-11-08: Owner confirmed implementation should proceed through all phases without intermediate physical-watch testing. Physical-watch testing is reserved for the final consolidated release-candidate stage.
+- 2026-11-08: Phase 1 implementation started: AGP 9.5.1, Gradle 9.9.0, Kotlin 2.4.21, Compose BOM 2026.09.00, Wear Compose 1.7.1, Room 2.8.5, WorkManager 2.12.0, Lifecycle 2.11.0, Wear Tiles 1.6.2, ProtoLayout 1.4.2, compileSdk/targetSdk 37, Java 17, version 2.1.0 (code 7). CI build verification pending.
+- 2026-11-08: Phase 2 source changes committed for safer remote refresh, pending-change preservation, failure propagation, empty-snapshot guards, and sync serialization. Automated verification pending.
+- 2026-11-08: Phase 3 initial theme update committed for watch-face dynamic colors and expressive motion. Full UI audit remains.
+- 2026-11-08: Added GitHub Actions Android CI workflow and initial JUnit formatting tests. CI results pending.
