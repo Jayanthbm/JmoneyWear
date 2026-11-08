@@ -93,7 +93,7 @@ Priority: critical.
 - Review manifest permissions and remove only permissions proven unnecessary.
 - Improve README with setup, architecture, build, testing, and troubleshooting instructions.
 
-**Implementation status:** GitHub Actions runs unit tests, lint, debug APK assembly, Room schema export/commit, and artifact upload. The version-1 Room schema is now committed at `app/schemas/.../1.json`. Formatting and snapshot-merge unit tests exist; broader sync integration tests and future migration tests remain. Settings full-sync feedback and Wear tile session restoration are included in the current reliability pass.
+**Implementation status:** GitHub Actions is configured for verification-only CI (`testDebugUnitTest` and `lintDebug`); it does not assemble or upload debug APKs. The version-1 Room schema is already committed at `app/schemas/.../1.json`. Formatting and snapshot-merge unit tests exist; broader sync integration tests and future migration tests remain. Settings full-sync feedback and Wear tile session restoration are included in the current reliability pass.
 
 **Exit criteria:** meaningful automated coverage for critical paths, schema/migration baseline committed, and no known high-risk static-review findings left unexplained.
 
@@ -115,9 +115,9 @@ Priority: critical.
 ## Phase 6 — Release candidate and owner testing
 
 - Confirm app versionCode/versionName increment strategy and update release metadata.
-- Produce a debug APK for owner testing first; produce a release artifact only when requested/appropriate.
-- Run available unit tests, lint/static checks, and a clean build.
-- Provide APK, commit SHA, change summary, known limitations, and a concise manual test checklist.
+- Owner generates the debug APK locally for emulator testing; cloud CI does not assemble or upload APK artifacts.
+- Run available unit tests and lint/static checks in CI; run `assembleDebug` locally immediately before installation.
+- Provide the local build command, commit SHA, change summary, known limitations, and a concise manual test checklist.
 - Owner tests on the Wear OS emulator and reports issues; fixes are made on this feature branch.
 - No merge to `master` until the owner approves the tested result.
 
@@ -125,13 +125,13 @@ Priority: critical.
 
 ## Current known risks and remaining work
 
-1. **Sync regression coverage is still incomplete.** Add failure-injection tests for interrupted remote page retrieval, failed uploads, suspicious empty snapshots, and concurrent full/partial sync. Existing unit tests cover formatting and the pure transaction snapshot merge helper only.
-2. **Partial transaction sync assumption needs backend validation.** Partial sync fetches rows with `tid > max(local tid)`. The Wear client repository contains no SQL trigger/function or server migration proving that every update to an existing transaction receives a new, higher `tid`. Do not change this algorithm based on guesswork; verify the actual Supabase schema/trigger contract before treating it as safe.
+1. **Sync regression coverage is still incomplete.** Add failure-injection tests for interrupted remote page retrieval, failed uploads, suspicious empty snapshots, and concurrent full/partial sync. Existing unit tests cover formatting and the pure transaction snapshot merge helper only. Transaction upload recovery has been hardened to re-read the server-assigned `tid` after a retry and to propagate cancellation; the full failure matrix is not yet tested.
+2. **Partial transaction sync assumption needs backend validation.** Partial sync fetches rows with `tid > max(local tid)`. The Wear client repository contains no SQL trigger/function or server migration proving that every update to an existing transaction receives a new, higher `tid`. The companion macOS sync implementation preserves a non-zero `tid` when editing an existing transaction, so this cursor alone would not discover edits from another client unless the server changes `tid` on update. Do not change this algorithm based on guesswork; verify the actual Supabase schema/trigger contract before treating it as safe.
 3. **Room schema baseline is captured, but migration tests are not yet needed/available.** The current version-1 schema was generated and committed by CI. Keep version 1 unchanged for this modernization; the entity definitions were checked against `master` and remain unchanged. Automatic destructive-migration fallback has been removed, so an unsupported schema change fails visibly instead of wiping local data. Add an explicit migration and migration test before any future schema change.
 4. **Material 3 Expressive audit is incomplete.** Review all five screens, dialogs, empty/loading/error states, tile layouts, curved-edge clipping, font scaling, and accessibility on Wear OS emulator configurations.
 5. **Tile reliability needs emulator verification.** The session restore path uses the existing auth repository and unchanged BuildConfig credentials, but cold-start tile host behavior and each tile's empty/error state still need validation.
 6. **Settings sync UX needs emulator verification.** Confirm full-width button layout, progress/result messaging, disabled sign-out while syncing, and tile refresh only after successful sync.
-7. **Release candidate is not ready.** The CI debug APK artifact exists, but a final post-change build, APK installation/data-preservation check, and owner emulator regression pass remain outstanding.
+7. **Release candidate is not ready.** Cloud CI no longer creates APK artifacts by design. A local `assembleDebug`, in-place installation/data-preservation check, and owner emulator regression pass remain outstanding.
 
 The earlier destructive-refresh, swallowed-upload-error, and unsynchronized-sync risks have source-level mitigations in place; they are not considered closed until targeted sync failure tests and emulator verification are complete.
 
@@ -156,3 +156,7 @@ The earlier destructive-refresh, swallowed-upload-error, and unsynchronized-sync
 - 2026-11-08: Added snapshot-merger tests for pending local-only rows and duplicate remote IDs. Backend `tid` update semantics remain unverified because this repository contains no server-side schema/trigger definition.
 
 - 2026-11-08: Database safety audit found `fallbackToDestructiveMigration(true)` in the Room builder. Removed it without changing the version-1 entities/schema; the original `master` entity definitions were compared and match. This prevents automatic local database deletion on an unsupported future schema upgrade.
+
+
+- 2026-11-08: Transaction upload recovery hardened: cancellation is never converted into a retry, fallback upsert is followed by a user-scoped read of the server-assigned `tid`, and the local row is marked clean only after the cursor is recovered. Transaction deletes are now scoped by both transaction ID and user ID.
+- 2026-11-08: Owner requested no cloud debug APK generation. GitHub Actions was changed to run only `testDebugUnitTest` and `lintDebug`; `assembleDebug`, Room schema write-back, artifact upload, and unnecessary write permission were removed. The committed Room v1 schema remains in source control. Owner will build the installable APK locally for emulator testing.
