@@ -81,7 +81,7 @@ Priority: critical.
 
 **Implementation status:** the theme now uses watch-face dynamic color when available, with the existing brand palette as fallback, and enables Wear Material 3 expressive motion. The app already used Wear Material 3 Expressive components from its previous design migration; the pager was migrated to the Wear-specific pager state. Settings full-sync action has been resized to use the available screen width and now reports progress/result. Tile fallback messages no longer incorrectly ask the user to log in.
 
-**Exit criteria:** all key screens and tiles use a coherent Wear-first design; screenshot review across supported emulator sizes where tooling permits; accessibility/contrast and interaction regression checklist completed. Owner's physical-watch testing remains deferred to Phase 6.
+**Exit criteria:** all key screens and tiles use a coherent Wear-first design; screenshot review across supported emulator sizes where tooling permits; accessibility/contrast and interaction regression checklist completed. Owner's Wear OS emulator testing remains deferred to Phase 6.
 
 ## Phase 4 — Architecture, maintainability, and quality
 
@@ -110,7 +110,7 @@ Priority: critical.
 - Check WorkManager constraints, retries, and duplicate scheduling.
 - Ensure tile services and update helpers behave consistently after app/data changes.
 
-**Exit criteria:** automated/emulator-based watch-focused regression checks pass where tooling permits and no major performance or lifecycle regressions are found. Physical watch verification is deferred to Phase 6.
+**Exit criteria:** automated/emulator-based watch-focused regression checks pass where tooling permits and no major performance or lifecycle regressions are found. Owner's Wear OS emulator verification is deferred to Phase 6.
 
 ## Phase 6 — Release candidate and owner testing
 
@@ -118,18 +118,23 @@ Priority: critical.
 - Produce a debug APK for owner testing first; produce a release artifact only when requested/appropriate.
 - Run available unit tests, lint/static checks, and a clean build.
 - Provide APK, commit SHA, change summary, known limitations, and a concise manual test checklist.
-- Owner tests on their physical Wear OS watch and reports issues; fixes are made on this feature branch.
+- Owner tests on the Wear OS emulator and reports issues; fixes are made on this feature branch.
 - No merge to `master` until the owner approves the tested result.
 
 **Exit criteria:** owner confirms the build is acceptable and explicitly authorizes merge/release.
 
-## Current known risks carried into the plan
+## Current known risks and remaining work
 
-1. Transaction full refresh currently deletes local user transactions before remote retrieval is complete.
-2. Several entity sync push methods catch and print errors; a subsequent remote refresh may replace local pending edits.
-3. Sync orchestration does not currently serialize all concurrent sync runs.
-4. Room database is at version 1 with schema export disabled.
-5. README and automated test coverage are currently very limited or absent in the inspected tree.
+1. **CI verification is pending.** The latest run has completed runner, JDK, Android SDK, and Gradle setup, but its combined unit-test/lint/debug-APK step is still running. Do not treat the build as passed until the workflow finishes successfully.
+2. **Sync regression coverage is insufficient.** Add tests for interrupted remote page retrieval, failed upload, empty remote snapshot protection, pending local edits/tombstones, and concurrent full/partial sync. The source changes are implemented but not yet verified by those tests.
+3. **Partial transaction sync assumption needs validation.** It fetches rows with `tid > max(local tid)`; verify the Supabase `tid` contract guarantees every remote update receives a higher tid, otherwise existing rows updated remotely may not be fetched.
+4. **Room migration baseline is incomplete.** Schema export is enabled, but the database remains at version 1 and the generated schema must be confirmed in CI. Add migration tests before any future schema change.
+5. **Material 3 Expressive audit is incomplete.** Review all five screens, dialogs, empty/loading/error states, tile layouts, curved-edge clipping, font scaling, and accessibility on Wear OS emulator configurations.
+6. **Tile reliability needs emulator verification.** The session restore path now matches the existing app login behavior and uses unchanged BuildConfig credentials, but cold-start tile host behavior and each tile's empty/error state still need validation.
+7. **Settings sync UX needs emulator verification.** Confirm full-width button layout, progress/result messaging, disabled sign-out while syncing, and tile refresh only after successful sync.
+8. **Release candidate is not ready.** The final APK, CI artifact, clean-build confirmation, and owner emulator regression pass remain outstanding.
+
+The earlier destructive-refresh, swallowed-upload-error, and unsynchronized-sync risks have source-level mitigations in place; they are not considered closed until the regression tests and CI pass.
 
 ## Progress log
 
@@ -145,3 +150,5 @@ Priority: critical.
 - 2026-11-08: Added the Wear Material 3 HorizontalPagerScaffold and page indicator to the app's five main pages.
 
 - 2026-11-08: Reliability follow-up: tile data access now restores the persisted Supabase session on demand under a mutex before resolving the current user. Updated tile fallback text, improved Settings full-sync button sizing and status feedback, and refreshes tiles only after successful full sync. Credentials and auth values remain unchanged. CI verification pending.
+
+- 2026-11-08: Owner confirmed they plan to run the final consolidated checks on a Wear OS emulator later today. No intermediate device testing is requested; implementation and automated verification continue on this branch first.
