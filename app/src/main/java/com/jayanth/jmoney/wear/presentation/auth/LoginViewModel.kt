@@ -25,9 +25,21 @@ class LoginViewModel @Inject constructor(
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
+    val sessionFlow = authRepository.sessionFlow
 
     init {
         checkSession()
+        observeSession()
+    }
+
+    private fun observeSession() {
+        viewModelScope.launch {
+            authRepository.sessionFlow.collect { session ->
+                if (session == null && _authState.value is AuthState.Authenticated) {
+                    _authState.value = AuthState.Idle
+                }
+            }
+        }
     }
 
     private fun checkSession() {

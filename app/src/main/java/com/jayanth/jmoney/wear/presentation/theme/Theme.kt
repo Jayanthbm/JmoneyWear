@@ -1,8 +1,11 @@
 package com.jayanth.jmoney.wear.presentation.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.MotionScheme
+import androidx.wear.compose.material3.dynamicColorScheme
 
 val JmoneyColorScheme = ColorScheme(
     primary = Primary,
@@ -37,8 +40,12 @@ val JmoneyColorScheme = ColorScheme(
 fun JmoneyTheme(
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
+    val watchFaceColorScheme = dynamicColorScheme(context)
+
     MaterialTheme(
-        colorScheme = JmoneyColorScheme,
+        colorScheme = watchFaceColorScheme ?: JmoneyColorScheme,
+        motionScheme = MotionScheme.expressive(),
         content = content
     )
 }

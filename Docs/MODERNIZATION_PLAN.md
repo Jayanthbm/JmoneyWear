@@ -1,0 +1,178 @@
+# JmoneyWear Modernization Plan
+
+## Goal
+
+Modernize JmoneyWear in isolated, reviewable phases while preserving existing finance data, offline-first behavior, authentication behavior, and Wear OS functionality. All work is performed on `feature/wear-modernization-2026`; `master` remains untouched until the owner explicitly chooses to merge.
+
+## Non-negotiable constraint: development credentials
+
+**Do not modify the existing production/development credential or auto-login setup.** In particular, do not remove, relocate, rename, replace, or change the behavior of the current `BuildConfig.DEV_EMAIL` / `BuildConfig.DEV_PASSWORD` usage. Do not change credential values or build configuration related to them. This is an explicit owner requirement and overrides recommendations from the previous static review. Other authentication/session code must also remain behavior-compatible unless separately approved.
+
+## Working rules
+
+- Work only on `feature/wear-modernization-2026`.
+- Keep changes phase-scoped and commit each completed phase with a descriptive message.
+- Do not merge to `master` or create a release without explicit approval.
+- Preserve Room data and existing Supabase schema compatibility.
+- Never run destructive sync or database operations against real user data during testing.
+- Prefer stable releases over alpha/beta dependencies for the release build.
+- Record dependency/API decisions and migration notes in this document or linked docs.
+- Report what was changed, what was built/tested, and anything the owner must verify on the watch.
+- Do not request Wear OS emulator testing or owner sign-off between phases. Complete all implementation phases first; reserve the owner's watch testing for Phase 6 only.
+- Do not claim a build or device test passed unless it was actually run.
+
+## Phase 0 — Baseline and planning
+
+**Status: Baseline captured; implementation underway.**
+
+- Record current project versions, module structure, SDK configuration, dependencies, manifest capabilities, and current build/test status.
+- Identify all sync flows and data replacement/deletion paths before changing them.
+- Capture current screen, tile, navigation, and interaction behavior as a regression baseline.
+- Agree on versioning and compatibility strategy.
+- No functional code changes in this phase.
+
+**Exit criteria:** baseline and phased plan reviewed; no source behavior changed.
+
+## Phase 1 — Android toolchain and dependency modernization
+
+- Review current stable Android Gradle Plugin, Gradle wrapper, Kotlin, Compose compiler plugin, Compose BOM, Wear Compose Material 3, Room, Hilt, WorkManager, Supabase, Ktor, and Wear Tiles versions.
+- Upgrade as a compatible set; do not blindly select the newest version of every library.
+- Set compileSdk to the newest stable SDK supported by the chosen Android Gradle Plugin and installed toolchain.
+- Set targetSdk according to current Wear OS / Google Play requirements and validate behavior changes before raising it.
+- Keep minSdk and supported watch-device range intentional; do not raise minSdk without a compatibility reason.
+- Review Java toolchain/JVM target and Gradle configuration.
+- Build after each logical upgrade group and resolve deprecations or breaking API changes.
+- Update dependency catalog and document compatibility decisions.
+
+**Selected stable baseline (2026-11-08):** Android 17 API 37 (compileSdk/targetSdk 37); Android Gradle Plugin 9.3.1; Gradle 9.7.0; Kotlin 2.4.21; Compose BOM 2026.09.00; Wear Compose libraries 1.7.1; Room 2.8.5; WorkManager 2.12.0; Lifecycle 2.11.0; Wear Tiles 1.6.2; ProtoLayout 1.4.2. Java source/target compatibility is 17. These choices prioritize the published Kotlin 2.4.21 compatibility ceiling (AGP up to 9.3.1 and Gradle up to 9.7.0) while retaining API 37 support. The complete CI workflow passed on 2026-11-08. The app's minSdk remains 30.
+
+**Implementation status:** dependency catalog, Gradle wrapper, SDK levels, Java compatibility, and version metadata have been upgraded. GitHub Actions run `42458702990` passed unit tests, lint, and debug APK assembly. App version is now 2.1.0 (versionCode 7). Existing credential-related code and build configuration were not modified.
+
+**Exit criteria:** clean Gradle sync and successful debug build; dependency matrix documented; no intentional product behavior changes.
+
+## Phase 2 — Sync correctness and data safety
+
+Priority: critical.
+
+- Fix full transaction refresh so local rows are never deleted before a complete, validated remote snapshot has been fetched.
+- Apply snapshot replacement atomically in a Room transaction, with safe staging/merge where appropriate.
+- Audit Category, Payee, Budget, Goal, Transaction Group, Quick Transaction, and Transaction sync paths.
+- Ensure failed uploads are surfaced to the orchestration layer; do not silently swallow an upload failure and then overwrite local pending changes with remote data.
+- Preserve pending local edits/deletes until the remote operation is confirmed.
+- Serialize sync runs so manual, scheduled, and UI-triggered syncs cannot race.
+- Validate partial transaction sync assumptions, especially how remote updates to existing records are detected.
+- Review retry/backoff, per-user scoping, sign-out behavior, and immediate sync after local writes.
+- Add focused unit/integration tests using fakes or an isolated test database; never use production data for destructive tests.
+
+**Implementation status:** transaction full refresh fetches and decodes remote pages before local replacement, preserves pending local edits/tombstones, and refuses suspicious empty snapshots when local data exists. Other entity sync refreshes preserve pending local changes and refuse suspicious empty snapshots. Upload failures propagate; sync and local reset operations are serialized. Pure snapshot-merge tests cover remote rows, pending edits, tombstones, local-only rows, and duplicate remote IDs. Complete-page snapshot loader tests cover ordered pagination, short final pages, interrupted page retrieval (no partial snapshot returned), cancellation, and empty-snapshot safety. Transaction upload-recovery tests cover successful first response, ambiguous response retry plus server-tid readback, cancellation during both attempts, and preservation of the original failure when retry/readback fails. The sync operation gate is extracted and tested to ensure full/partial sync and reset operations cannot overlap. GitHub Actions run #98 (commit `bf4812f761d423a819adaa7b5acc459ebba21c1d`) passed `testDebugUnitTest` and `lintDebug` on 2026-11-08. CI intentionally does not assemble or upload a debug APK. Backend integration tests still require an isolated Supabase test environment.
+
+**Exit criteria:** tests demonstrate that network failures, partial failures, and overlapping sync requests do not lose local changes; normal sync behavior remains intact.
+
+## Phase 3 — Wear OS Material You / Material 3 Expressive redesign
+
+- Keep the Wear-specific `androidx.wear.compose.material3` design system; do not mix mobile Material 3 components/themes into Wear UI.
+- Audit all app screens, dialogs, lists, forms, empty states, loading/error states, and tiles for consistent use of Wear Material 3 Expressive.
+- Establish a coherent theme: color roles, typography, shapes, spacing, iconography, and component defaults.
+- Use dynamic color only where supported and appropriate; maintain a clear fallback palette and sufficient contrast.
+- Improve glanceability, touch target sizing, rotary/scroll behavior, curved-screen layout, and one-handed interactions.
+- Use expressive motion selectively; keep financial values and key actions calm, legible, and fast.
+- Refresh tiles and complications to match the app theme and current Wear OS conventions.
+- Preserve all existing finance workflows and avoid introducing unnecessary navigation depth.
+
+**Implementation status:** the theme now uses watch-face dynamic color when available, with the existing brand palette as fallback, and enables Wear Material 3 expressive motion. The app already used Wear Material 3 Expressive components from its previous design migration; the pager was migrated to the Wear-specific pager state. Settings full-sync action has been resized to use the available screen width and now reports progress/result. Tile fallback messages no longer incorrectly ask the user to log in.
+
+**Exit criteria:** all key screens and tiles use a coherent Wear-first design; screenshot review across supported emulator sizes where tooling permits; accessibility/contrast and interaction regression checklist completed. Owner's Wear OS emulator testing remains deferred to Phase 6.
+
+## Phase 4 — Architecture, maintainability, and quality
+
+- Replace scattered `printStackTrace()`-only handling with structured logging and user-appropriate error states, without hiding failures.
+- Reduce duplicated sync orchestration while keeping entity-specific mapping and rules explicit.
+- Enable Room schema export and commit the schema; add tested migrations before any schema change.
+- Add tests for repositories, sync edge cases, ViewModels, and important UI behavior.
+- Review lifecycle handling, coroutine cancellation, state restoration, and resource use.
+- Review manifest permissions and remove only permissions proven unnecessary.
+- Improve README with setup, architecture, build, testing, and troubleshooting instructions.
+
+**Implementation status:** GitHub Actions is configured for verification-only CI (`testDebugUnitTest` and `lintDebug`); it does not assemble or upload debug APKs. The version-1 Room schema is already committed at `app/schemas/.../1.json`. Formatting and snapshot-merge unit tests exist; broader sync integration tests and future migration tests remain. Settings full-sync feedback and Wear tile session restoration are included in the current reliability pass. A full-sync attempt without an authenticated user now updates the visible sync state with an error instead of silently returning a failed Result.
+
+**Exit criteria:** meaningful automated coverage for critical paths, schema/migration baseline committed, and no known high-risk static-review findings left unexplained.
+
+## Phase 5 — Wear OS UX, performance, and reliability
+
+- Ensure tile services can restore the persisted Supabase session when Wear OS binds a tile before the main activity has started; do not interpret an uninitialized in-memory session as signed out.
+- Serialize concurrent tile-triggered session restoration and use the authenticated user scope for all tile DAO reads.
+- Keep tile fallback copy actionable and avoid misleading login prompts when the session is simply not initialized yet.
+- Make manual full sync observable in Settings: clear progress, success/failure feedback, and tile refresh only after a successful sync.
+
+- Review startup time, memory, battery use, background sync behavior, and tile update frequency.
+- Verify navigation, scroll-to-top controls, loading states, offline mode, empty data, and error recovery.
+- Verify small/large round watch layouts and font scaling.
+- Check WorkManager constraints, retries, and duplicate scheduling.
+- Ensure tile services and update helpers behave consistently after app/data changes.
+
+**Exit criteria:** automated/emulator-based watch-focused regression checks pass where tooling permits and no major performance or lifecycle regressions are found. Owner's Wear OS emulator verification is deferred to Phase 6.
+
+## Phase 6 — Release candidate and owner testing
+
+- Confirm app versionCode/versionName increment strategy and update release metadata.
+- Owner generates the debug APK locally for emulator testing; cloud CI does not assemble or upload APK artifacts.
+- Run available unit tests and lint/static checks in CI; run `assembleDebug` locally immediately before installation.
+- Provide the local build command, commit SHA, change summary, known limitations, and a concise manual test checklist.
+- Owner tests on the Wear OS emulator and reports issues; fixes are made on this feature branch.
+- No merge to `master` until the owner approves the tested result.
+
+**Exit criteria:** owner confirms the build is acceptable and explicitly authorizes merge/release.
+
+## Current known risks and remaining work
+
+1. **Sync regression coverage is improved but backend integration remains.** Unit tests cover interrupted remote page retrieval, no partial snapshot return, suspicious empty snapshots, serialized sync/reset operations, transaction snapshot merging, upload retry/readback, cancellation, and error chaining. Additional failure-injection tests exercise the production sync pipeline (failed upload stops refresh; failed entity refresh stops later phases; cancellation propagation; ordered success) and the shared remote-mutation/acknowledgement helpers used by all seven entity sync modules. Conditional acknowledgement now uses Room `@Transaction` DAO methods to compare the current row with the uploaded snapshot and update its sync state/delete its tombstone atomically; a concurrent edit/delete cannot slip between comparison and acknowledgement and remains pending for the next sync. Fake in-memory DAO tests cover edit-during-upload, unchanged-row acknowledgement, row removal during upload, and remote failure. These are focused pipeline/helper tests rather than a full `SyncRepositoryImpl` test wired to fake Supabase/Room DAOs; live backend integration remains separate. Do not test against production finance data.
+2. **Partial transaction sync assumption needs backend validation.** Partial sync fetches rows with `tid > max(local tid)`. The checked-in web repository SQL snapshot `supabase/tables/transactions.sql` does not include the `tid` column, and no checked-in trigger/function establishes whether updates to existing transactions receive a new, higher `tid`; it may be a stale schema snapshot compared with the live Supabase database. The Wear client now omits `tid` from write payloads so the server default/sequence, rather than a local placeholder such as zero, assigns the cursor for new rows. This does not prove existing-row updates advance `tid`. The companion macOS sync implementation preserves a non-zero `tid` when editing an existing transaction. Before treating partial sync as reliable for cross-client edits, inspect the live Supabase column default, unique/index constraints, and update trigger. Do not run a speculative production migration.
+3. **Room schema baseline is captured, but migration tests are not yet needed/available.** The current version-1 schema was generated and committed by CI. Keep version 1 unchanged for this modernization; the entity definitions were checked against `master` and remain unchanged. Automatic destructive-migration fallback has been removed, so an unsupported schema change fails visibly instead of wiping local data. Add an explicit migration and migration test before any future schema change.
+4. **Material 3 Expressive source audit is complete for the current screen set; device visual validation remains.** Review all five screens, dialogs, empty/loading/error states, tile layouts, curved-edge clipping, font scaling, rotary behavior, and accessibility on Wear OS emulator configurations. CI lint does not prove visual fit or touch usability.
+5. **Tile reliability needs emulator verification.** The session restore path uses the existing auth repository and unchanged BuildConfig credentials, but cold-start tile host behavior and each tile's empty/error state still need validation.
+6. **Settings sync UX needs emulator verification.** Confirm full-width button layout, progress/result messaging, disabled sign-out while syncing, and tile refresh only after successful sync.
+7. **Release candidate is not ready.** Cloud CI no longer creates APK artifacts by design. A local `assembleDebug`, in-place installation/data-preservation check, and owner emulator regression pass remain outstanding. These require the owner's local Android SDK/emulator and must not be marked complete from cloud-only work.
+
+The earlier destructive-refresh, swallowed-upload-error, and unsynchronized-sync risks have source-level mitigations in place; they are not considered closed until targeted sync failure tests and emulator verification are complete.
+
+## Progress log
+
+- 2026-11-08: Created `feature/wear-modernization-2026` from `master`.
+- 2026-11-08: Added this phased modernization plan. No application source code, production credentials, or runtime behavior changed.
+- 2026-11-08: Owner confirmed implementation should proceed through all phases without intermediate Wear OS emulator testing. Wear OS emulator testing is reserved for the final consolidated release-candidate stage.
+- 2026-11-08: Phase 1 implementation started: AGP 9.3.1, Gradle 9.7.0, Kotlin 2.4.21, Compose BOM 2026.09.00, Wear Compose 1.7.1, Room 2.8.5, WorkManager 2.12.0, Lifecycle 2.11.0, Wear Tiles 1.6.2, ProtoLayout 1.4.2, compileSdk/targetSdk 37, Java 17, version 2.1.0 (code 7). CI build verification subsequently passed in run `42458702990`.
+- 2026-11-08: Phase 2 source changes committed for safer remote refresh, pending-change preservation, failure propagation, empty-snapshot guards, and sync serialization. Initial automated verification subsequently passed in run `42458702990`; additional failure-injection coverage remains.
+- 2026-11-08: Phase 3 initial theme update committed for watch-face dynamic colors and expressive motion. Full UI audit remains.
+- 2026-11-08: Added GitHub Actions Android CI workflow and initial JUnit formatting tests. Initial CI attempt exposed the removed legacy SDK `tools` package in setup-android@v3; workflow was corrected to setup-android@v4 with platform-tools only.
+- 2026-11-08: Adjusted AGP/Gradle from the newest available line to AGP 9.3.1 + Gradle 9.7.0 to stay within Kotlin 2.4.21's published fully-supported compatibility matrix. Final CI verification subsequently passed in run `42458702990`.
+- 2026-11-08: CI exposed Android 17 platform's package name as `platforms;android-37.0`; workflow now installs that exact package and creates the expected `android-37` SDK alias for AGP compatibility.
+- 2026-11-08: Added the Wear Material 3 HorizontalPagerScaffold and page indicator to the app's five main pages.
+
+- 2026-11-08: Reliability follow-up: tile data access now restores the persisted Supabase session on demand under a mutex before resolving the current user. Updated tile fallback text, improved Settings full-sync button sizing and status feedback, and refreshes tiles only after successful full sync. Credentials and auth values remain unchanged. CI verification subsequently passed in run `42458702990`.
+
+- 2026-11-08: Owner confirmed they plan to run the final consolidated checks on a Wear OS emulator later today. No intermediate device testing is requested; implementation and automated verification continue on this branch first.
+
+- 2026-11-08: GitHub Actions run `42458702990` passed `testDebugUnitTest`, `lintDebug`, and `assembleDebug`; Room schema export was committed as `573af5e`, and the debug APK artifact was uploaded.
+- 2026-11-08: Added snapshot-merger tests for pending local-only rows and duplicate remote IDs. Backend `tid` update semantics remain unverified because this repository contains no server-side schema/trigger definition.
+
+- 2026-11-08: Database safety audit found `fallbackToDestructiveMigration(true)` in the Room builder. Removed it without changing the version-1 entities/schema; the original `master` entity definitions were compared and match. This prevents automatic local database deletion on an unsupported future schema upgrade.
+
+
+- 2026-11-08: Transaction upload recovery hardened: cancellation is never converted into a retry, fallback upsert is followed by a user-scoped read of the server-assigned `tid`, and the local row is marked clean only after the cursor is recovered. Transaction deletes are now scoped by both transaction ID and user ID.
+- 2026-11-08: Owner requested no cloud debug APK generation. GitHub Actions was changed to run only `testDebugUnitTest` and `lintDebug`; `assembleDebug`, Room schema write-back, artifact upload, and unnecessary write permission were removed. The committed Room v1 schema remains in source control. Owner will build the installable APK locally for emulator testing.
+
+- 2026-11-08: Added focused transaction upload-recovery tests (first-response success, ambiguous response retry/readback, cancellation, and chained failure diagnostics). The sync repository now surfaces an unauthenticated manual full-sync attempt through its observable error state instead of leaving Settings idle.
+- 2026-11-08: README and emulator checklist now direct the owner to build the APK locally; GitHub Actions runs tests and lint only, with no cloud APK build or artifact upload.
+
+- 2026-11-08: Extracted a complete remote snapshot paging helper and tested ordered multi-page reads, short final pages, interrupted fetches, cancellation, and empty-snapshot protection. Transaction refresh now uses the helper so no partial page set is returned to the Room replacement step.
+- 2026-11-08: Extracted the repository sync/reset mutex into a small operation gate and added a concurrency test proving a second operation waits until the first finishes.
+- 2026-11-08: Found that transaction write payloads reused the read DTO and therefore included the local `tid` value (new watch transactions start at zero). Added a dedicated write DTO that omits server-managed `tid`, allowing the database default/sequence to assign it. Added a serialization test to prevent sending a local cursor value again. Existing-row update cursor advancement remains unverified until the live Supabase trigger/schema is inspected.
+- 2026-11-08: Added recovery tests for cancellation during retry and failures while reading the server-assigned cursor. Wear OS tile cold-start and full visual review remain owner emulator checks.
+
+- 2026-11-08: Added sync failure-injection coverage for the production ordered sync pipeline and shared remote mutation/acknowledgement helper. GitHub Actions run `42467470365` (commit `e7e206a88c8c134d32abbf4ae8bb7c7ac50b494a`) passed `testDebugUnitTest` and `lintDebug`. Coverage is helper/pipeline-level; full repository/DAO integration and live Supabase verification remain open.
+
+- 2026-11-08: Fixed the in-flight local-edit acknowledgement race across transaction, category, payee, group, budget, goal, and quick-transaction sync. After each remote mutation, sync re-reads the row and acknowledges only when it still matches the exact uploaded snapshot. Added fake in-memory DAO failure-injection tests for concurrent edits, local row removal, unchanged-row acknowledgement, and remote failure. GitHub Actions run #125 (`42468413323`, commit `e0230c9ccfbdedd3af966e25c6a4789d89a11c1d`) passed `testDebugUnitTest` and `lintDebug`. Full `SyncRepositoryImpl`/Room integration tests and live Supabase verification remain outside the current cloud-only harness.
+
+- 2026-11-08: Closed the compare/acknowledge time-of-check/time-of-use gap: snapshot comparison and local acknowledgement/deletion now run inside Room `@Transaction` DAO methods for all applicable entity types. Fake DAO tests cover in-flight edit, unchanged acknowledgement, local row removal, replacement edit during remote delete, and remote failure. GitHub Actions run #136 (`42468864874`, commit `2b7a7a517787152b6ee4c37e133f30fc3f2340a4`) passed `testDebugUnitTest` and `lintDebug`. No APK assembly or artifact upload was run.
+- 2026-11-08: Follow-up review verified Room `@Transaction` compare-and-acknowledge methods are wired into transaction, category, payee, group, budget, goal, and quick-transaction upload/delete paths. Fake-DAO failure-injection tests cover the in-flight edit/removal and remote-failure cases; the repository's production sync orchestration is separately exercised through the extracted pipeline tests. Latest verification-only GitHub Actions run #137 (`42469015774`, commit `cd37938e09bea3ba021c676b261bada5e032bdbd`) passed `testDebugUnitTest` and `lintDebug`. No Supabase connector or server-side SQL/trigger definitions are available in this repository, so live `tid` default/index/update-trigger validation remains blocked on backend access. A full `SyncRepositoryImpl` test against a real in-memory Room database and mocked Supabase client is still not present; do not describe fake-DAO/pipeline tests as that integration test. No production data was accessed, no APK was generated, and `master` was not changed.
+- 2026-11-08: Final cloud audit on branch head `f96c6acce00196fd8092a53094b15929cd8bb67a`: confirmed the repository sync pipeline stops on stage failure/cancellation; local mutation acknowledgements for all seven entity sync modules use the conditional helper and Room `@Transaction` compare-before-ack/delete DAO methods; CI workflow contains only `testDebugUnitTest` and `lintDebug`. GitHub Actions run #138 (`42475682663`, current head `f96c6ac`) passed both checks. The branch is 151 commits ahead of `master` and 0 behind; `master` remains unchanged. Cloud work is complete to the limits of repository-only access. Outstanding verification is explicitly limited to (1) a real Room/SQLite plus mocked-Supabase repository integration test, which is not represented by the current fake-DAO/pipeline tests, and (2) inspection of the live Supabase `tid` default/sequence and update trigger behavior. These require a suitable isolated backend/test harness; no production data was accessed. Owner's local Wear OS emulator testing and APK build remain deferred to the owner. No APK was generated or uploaded.

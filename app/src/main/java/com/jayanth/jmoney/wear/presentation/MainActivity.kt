@@ -22,8 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.CircularProgressIndicator
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.wear.compose.foundation.pager.HorizontalPager
+import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
@@ -40,7 +40,9 @@ import com.jayanth.jmoney.wear.presentation.sync.SyncScreen
 import com.jayanth.jmoney.wear.presentation.theme.JmoneyTheme
 import com.jayanth.jmoney.wear.data.repository.SyncRepository
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.AnimatedPage
 import androidx.wear.compose.material3.AppScaffold
+import androidx.wear.compose.material3.HorizontalPagerScaffold
 import androidx.wear.compose.material3.MaterialTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -86,6 +88,7 @@ fun WearApp(
     JmoneyTheme {
         AppScaffold {
             val authState by loginViewModel.authState.collectAsState()
+            val session by loginViewModel.sessionFlow.collectAsState()
             var hasSynced by remember { mutableStateOf(true) } // Default to true while loading
 
             LaunchedEffect(authState, hasSynced) {
@@ -94,8 +97,9 @@ fun WearApp(
                 }
             }
 
-            when (authState) {
-                is AuthState.Authenticated -> {
+            val isAuthenticated = authState is AuthState.Authenticated && session != null
+            when {
+                isAuthenticated -> {
                     if (!hasSynced) {
                         SyncScreen(
                             onSyncSuccess = {
@@ -114,26 +118,30 @@ fun WearApp(
                             }
                         }
 
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier.fillMaxSize(),
-                            userScrollEnabled = !isOverlayOpen
-                        ) { page ->
-                            when (page) {
-                                0 -> DashboardScreen(
-                                    initialAction = initialAction,
-                                    onConsumeAction = onConsumeAction,
-                                    onOverlayStateChanged = { isOverlayOpen = it }
-                                )
-                                1 -> TransactionsScreen()
-                                2 -> BudgetsScreen()
-                                3 -> GoalsScreen()
-                                4 -> SettingsScreen()
+                        HorizontalPagerScaffold(pagerState = pagerState) {
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                                userScrollEnabled = !isOverlayOpen
+                            ) { page ->
+                                AnimatedPage(pageIndex = page, pagerState = pagerState) {
+                                    when (page) {
+                                        0 -> DashboardScreen(
+                                            initialAction = initialAction,
+                                            onConsumeAction = onConsumeAction,
+                                            onOverlayStateChanged = { isOverlayOpen = it }
+                                        )
+                                        1 -> TransactionsScreen()
+                                        2 -> BudgetsScreen()
+                                        3 -> GoalsScreen()
+                                        4 -> SettingsScreen()
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                is AuthState.Loading -> {
+                authState is AuthState.Loading -> {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()

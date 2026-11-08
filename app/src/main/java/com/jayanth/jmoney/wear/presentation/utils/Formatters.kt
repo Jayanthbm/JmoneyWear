@@ -7,11 +7,31 @@ import java.util.Locale
 
 fun formatCurrency(amount: Double): String {
     val isInteger = amount % 1.0 == 0.0
-    val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("en-IN")).apply {
+    val formatter = NumberFormat.getNumberInstance(Locale.US).apply {
         minimumFractionDigits = if (isInteger) 0 else 2
         maximumFractionDigits = 2
+        isGroupingUsed = false
     }
-    return "₹${formatter.format(amount)}"
+    val formatted = formatter.format(amount)
+    val decimalIndex = formatted.indexOf('.')
+    val integerPart = if (decimalIndex >= 0) formatted.substring(0, decimalIndex) else formatted
+    val fractionPart = if (decimalIndex >= 0) formatted.substring(decimalIndex) else ""
+    val sign = if (integerPart.startsWith("-")) "-" else ""
+    val digits = integerPart.removePrefix("-")
+    val groupedInteger = if (digits.length <= 3) {
+        digits
+    } else {
+        val prefix = digits.dropLast(3)
+        val firstGroupLength = if (prefix.length % 2 == 0) 2 else 1
+        val groups = mutableListOf(prefix.take(firstGroupLength))
+        var index = firstGroupLength
+        while (index < prefix.length) {
+            groups += prefix.substring(index, (index + 2).coerceAtMost(prefix.length))
+            index += 2
+        }
+        (groups + digits.takeLast(3)).joinToString(",")
+    }
+    return "$sign₹$groupedInteger$fractionPart"
 }
 
 fun formatTransactionDate(dateStr: String): String {

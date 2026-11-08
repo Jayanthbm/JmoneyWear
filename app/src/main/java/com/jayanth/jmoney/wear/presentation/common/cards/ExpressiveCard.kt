@@ -28,7 +28,7 @@ fun ExpressiveCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     colors: CardColors? = null,
-    shape: Shape = RoundedCornerShape(24.dp), // Large M3 Expressive corner radius
+    shape: Shape = RoundedCornerShape(26.dp), // Wear OS 5 Expressive corner radius
     content: @Composable ColumnScope.() -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -36,7 +36,7 @@ fun ExpressiveCard(
 
     // Dynamic corner radius morphing on press
     val dynamicCornerRadius by animateDpAsState(
-        targetValue = if (isPressed) 12.dp else 24.dp,
+        targetValue = if (isPressed) 14.dp else 26.dp,
         animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
         label = "CardShapeMorph"
     )
@@ -52,7 +52,7 @@ fun ExpressiveCard(
         contentColor = MaterialTheme.colorScheme.onSurface
     )
 
-    val isDefaultShape = shape == RoundedCornerShape(24.dp)
+    val isDefaultShape = shape == RoundedCornerShape(26.dp)
     val finalShape = if (isDefaultShape) {
         RoundedCornerShape(dynamicCornerRadius)
     } else {

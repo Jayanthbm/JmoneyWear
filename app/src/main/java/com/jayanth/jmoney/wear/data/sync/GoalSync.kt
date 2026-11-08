@@ -20,14 +20,19 @@ class GoalSync @Inject constructor(
         val unsynced = goalDao.getUnsyncedGoals(userId)
         for (g in unsynced) {
             if (g.deleted == 1) {
-                try {
-                    supabaseClient.from("goals").delete {
-                        filter { eq("id", g.id) }
-                    }
-                    goalDao.delete(g.id)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                performRemoteMutationIfUnchanged(
+                    snapshot = g,
+
+                    remoteMutation = {
+                        supabaseClient.from("goals").delete {
+                            filter {
+                                eq("id", g.id)
+                                eq("user_id", userId)
+                            }
+                        }
+                    },
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> goalDao.deleteIfUnchanged(uploadedSnapshot) }
+                )
             } else {
                 val payload = SupabaseGoal(
                     id = g.id,
@@ -37,12 +42,12 @@ class GoalSync @Inject constructor(
                     currentAmount = g.currentAmount,
                     userId = g.userId
                 )
-                try {
-                    supabaseClient.from("goals").upsert(payload)
-                    goalDao.updateSyncStatus(g.id, 0)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                performRemoteMutationIfUnchanged(
+                    snapshot = g,
+
+                    remoteMutation = { supabaseClient.from("goals").upsert(payload) },
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> goalDao.acknowledgeIfUnchanged(uploadedSnapshot) }
+                )
             }
         }
     }
@@ -64,9 +69,14 @@ class GoalSync @Inject constructor(
                 deleted = 0
             )
         }
+        if (remoteList.isEmpty() && goalDao.getGoals(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for goal is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
+            val pendingLocalChanges = goalDao.getUnsyncedGoals(userId)
             goalDao.deleteAllForUser(userId)
-            goalDao.insertOrReplace(entities)
+            goalDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }

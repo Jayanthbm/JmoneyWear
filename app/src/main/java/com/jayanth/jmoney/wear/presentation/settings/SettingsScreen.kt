@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
@@ -120,14 +121,29 @@ fun SettingsScreen(
             }
 
             // Force Full Sync Action
-            item {
+            item(key = "force_full_sync_button") {
                 Spacer(modifier = Modifier.height(8.dp))
-                if (state.isSyncing) {
+                ExpressiveButton(
+                    onClick = { viewModel.forceFullSync() },
+                    text = if (state.isSyncing) "Syncing..." else "Force full sync",
+                    isPrimary = true,
+                    enabled = !state.isSyncing,
+                    width = Dp.Unspecified,
+                    height = 52.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
+                )
+            }
+
+            // Sync Status / Message
+            if (state.isSyncing) {
+                item(key = "sync_progress") {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp)
+                            .padding(vertical = 4.dp)
                     ) {
                         LoadingIndicator()
                         state.syncMessage?.let {
@@ -140,33 +156,40 @@ fun SettingsScreen(
                             )
                         }
                     }
-                } else {
-                    ExpressiveButton(
-                        onClick = { viewModel.forceFullSync() },
-                        text = "Force Full Sync",
-                        isPrimary = false,
-                        isError = true,
-                        width = 140.dp,
-                        height = 40.dp,
-                        shape = ButtonDefaults.shape,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                }
+            } else if (state.syncMessage != null) {
+                item(key = "sync_message") {
+                    Text(
+                        text = state.syncMessage!!,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (state.syncMessage!!.startsWith("Sync failed")) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
 
             // Sign Out Action
             item {
-                Spacer(modifier = Modifier.height(6.dp))
-                    ExpressiveButton(
-                        onClick = { viewModel.signOut() },
-                        text = "Sign Out",
-                        isPrimary = false,
-                        enabled = !state.isSyncing,
-                        width = 140.dp,
-                        height = 40.dp,
-                        shape = ButtonDefaults.shape,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
+                Spacer(modifier = Modifier.height(4.dp))
+                ExpressiveButton(
+                    onClick = { viewModel.signOut() },
+                    text = "Sign Out",
+                    isPrimary = false,
+                    isError = true,
+                    enabled = !state.isSyncing,
+                    width = Dp.Unspecified,
+                    height = 52.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 6.dp)
+                )
             }
 
             // App Version Footer

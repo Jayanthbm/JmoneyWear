@@ -1,9 +1,14 @@
 package com.jayanth.jmoney.wear.presentation.tiles.utils
 
+import com.jayanth.jmoney.wear.BuildConfig
 import com.jayanth.jmoney.wear.data.database.TransactionDao
 import com.jayanth.jmoney.wear.data.repository.AuthRepository
 import java.time.LocalDate
 import com.jayanth.jmoney.wear.data.database.BudgetDao
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -15,12 +20,45 @@ class TileDataFetcher @Inject constructor(
     private val goalDao: com.jayanth.jmoney.wear.data.database.GoalDao,
     private val authRepository: AuthRepository
 ) {
-    fun isLoggedIn(): Boolean {
-        return authRepository.getCurrentUserId() != null
+    private val sessionRestoreMutex = Mutex()
+
+    /**
+     * Tile providers can be started by the Wear OS host before MainActivity.
+     * Restore the persisted Supabase session here instead of interpreting an
+     * uninitialized in-memory session as a signed-out user.
+     */
+    private suspend fun authenticatedUserId(): String? {
+        authRepository.getCurrentUserId()?.let { return it }
+
+        return sessionRestoreMutex.withLock {
+            authRepository.getCurrentUserId()?.let { return@withLock it }
+            if (authRepository.autoLogin()) {
+                return@withLock authRepository.getCurrentUserId()
+            }
+
+            // Match MainActivity's existing development auto-login behavior.
+            // Read the existing BuildConfig values; never redefine or mutate them.
+            val devEmail = BuildConfig.DEV_EMAIL
+            val devPassword = BuildConfig.DEV_PASSWORD
+            if (devEmail.isBlank() || devPassword.isBlank()) {
+                return@withLock null
+            }
+
+            val signInResult = authRepository.signInWithEmail(devEmail, devPassword)
+            if (signInResult.isFailure) {
+                return@withLock null
+            }
+
+            withTimeoutOrNull(10_000L) {
+                authRepository.sessionFlow.first { it?.user?.id != null }?.user?.id
+            } ?: authRepository.getCurrentUserId()
+        }
     }
 
+    suspend fun isLoggedIn(): Boolean = authenticatedUserId() != null
+
     suspend fun fetchGoalProgress(goalId: String): GoalProgressData? {
-        val userId = authRepository.getCurrentUserId() ?: return null
+        val userId = authenticatedUserId() ?: return null
         val goals = goalDao.getGoals(userId)
         val goal = goals.firstOrNull { it.id == goalId } ?: return null
 
@@ -35,7 +73,7 @@ class TileDataFetcher @Inject constructor(
     }
 
     suspend fun fetchRemainingForPeriod(): RemainingData {
-        val userId = authRepository.getCurrentUserId() ?: return RemainingData(0.0, false)
+        val userId = authenticatedUserId() ?: return RemainingData(0.0, false)
         val today = LocalDate.now()
         val monthStart = today.withDayOfMonth(1).toString()
         val monthEnd = today.withDayOfMonth(today.lengthOfMonth()).toString()
@@ -49,8 +87,9 @@ class TileDataFetcher @Inject constructor(
             isOverspent = remaining < 0
         )
     }
+
     suspend fun fetchMonthlyExpense(): ExpenseData {
-        val userId = authRepository.getCurrentUserId() ?: return ExpenseData(0.0, "")
+        val userId = authenticatedUserId() ?: return ExpenseData(0.0, "")
         val today = LocalDate.now()
         val monthStart = today.withDayOfMonth(1).toString()
         val monthEnd = today.withDayOfMonth(today.lengthOfMonth()).toString()
@@ -61,7 +100,7 @@ class TileDataFetcher @Inject constructor(
     }
 
     suspend fun fetchMonthlyIncome(): IncomeData {
-        val userId = authRepository.getCurrentUserId() ?: return IncomeData(0.0, "")
+        val userId = authenticatedUserId() ?: return IncomeData(0.0, "")
         val today = LocalDate.now()
         val monthStart = today.withDayOfMonth(1).toString()
         val monthEnd = today.withDayOfMonth(today.lengthOfMonth()).toString()
@@ -72,12 +111,12 @@ class TileDataFetcher @Inject constructor(
     }
 
     suspend fun fetchNetWorth(): Double {
-        val userId = authRepository.getCurrentUserId() ?: return 0.0
+        val userId = authenticatedUserId() ?: return 0.0
         return transactionDao.getNetWorth(userId) ?: 0.0
     }
 
     suspend fun fetchBudgetSpending(budgetId: String): BudgetSpendingData? {
-        val userId = authRepository.getCurrentUserId() ?: return null
+        val userId = authenticatedUserId() ?: return null
         val budgets = budgetDao.getBudgets(userId)
         val budget = budgets.firstOrNull { it.id == budgetId } ?: return null
 
@@ -152,4 +191,3 @@ data class GoalProgressData(
     val target: Double,
     val percentage: Double
 )
-

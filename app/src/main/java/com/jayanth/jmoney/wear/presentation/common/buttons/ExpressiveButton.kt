@@ -42,22 +42,22 @@ fun ExpressiveButton(
     size: Dp = 52.dp,
     width: Dp = size,
     height: Dp = size,
-    shape: Shape = RoundedCornerShape(24.dp), // Expressive large rounded shape
+    shape: Shape? = null, // Defaults to dynamic expressive morphing shape
     content: @Composable (RowScope.() -> Unit)? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     
-    // Dynamic corner radius morphing on press
+    // Dynamic corner radius morphing on press (pill/stadium to squircle)
     val dynamicCornerRadius by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (isPressed) 8.dp else 24.dp,
+        targetValue = if (isPressed) 14.dp else 26.dp,
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
         label = "ButtonShapeMorph"
     )
 
     // Smooth press-scaling animation
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.92f else 1.0f,
+        targetValue = if (isPressed) 0.94f else 1.0f,
         animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
         label = "ButtonPressScale"
     )
@@ -74,12 +74,7 @@ fun ExpressiveButton(
         else -> ButtonDefaults.filledTonalButtonColors()
     }
 
-    val isDefaultShape = shape == RoundedCornerShape(24.dp)
-    val finalShape = if (isDefaultShape) {
-        RoundedCornerShape(dynamicCornerRadius)
-    } else {
-        shape
-    }
+    val finalShape = shape ?: RoundedCornerShape(dynamicCornerRadius)
 
     Button(
         onClick = onClick,

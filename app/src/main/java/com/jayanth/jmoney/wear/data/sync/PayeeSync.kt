@@ -26,12 +26,12 @@ class PayeeSync @Inject constructor(
                 userId = payee.userId,
                 priority = payee.priority
             )
-            try {
-                supabaseClient.from("payees").upsert(payload)
-                payeeDao.updateSyncStatus(payee.id, 0)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            performRemoteMutationIfUnchanged(
+                    snapshot = payee,
+
+                remoteMutation = { supabaseClient.from("payees").upsert(payload) },
+                acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> payeeDao.acknowledgeIfUnchanged(uploadedSnapshot) }
+            )
         }
     }
 
@@ -50,9 +50,14 @@ class PayeeSync @Inject constructor(
                 priority = item.priority
             )
         }
+        if (remoteList.isEmpty() && payeeDao.getPayees(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for payee is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
+            val pendingLocalChanges = payeeDao.getUnsyncedPayees(userId)
             payeeDao.deleteAllForUser(userId)
-            payeeDao.insertOrReplace(entities)
+            payeeDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }

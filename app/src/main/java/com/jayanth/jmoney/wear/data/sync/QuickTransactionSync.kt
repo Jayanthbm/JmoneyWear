@@ -20,14 +20,19 @@ class QuickTransactionSync @Inject constructor(
         val unsynced = quickTransactionDao.getUnsynced(userId)
         for (qt in unsynced) {
             if (qt.deleted == 1) {
-                try {
-                    supabaseClient.from("quick_transactions").delete {
-                        filter { eq("id", qt.id) }
-                    }
-                    quickTransactionDao.delete(qt.id)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                performRemoteMutationIfUnchanged(
+                    snapshot = qt,
+
+                    remoteMutation = {
+                        supabaseClient.from("quick_transactions").delete {
+                            filter {
+                                eq("id", qt.id)
+                                eq("user_id", userId)
+                            }
+                        }
+                    },
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> quickTransactionDao.deleteIfUnchanged(uploadedSnapshot) }
+                )
             } else {
                 val payload = SupabaseQuickTransaction(
                     id = qt.id,
@@ -42,12 +47,12 @@ class QuickTransactionSync @Inject constructor(
                     priority = qt.priority,
                     identifier = qt.identifier
                 )
-                try {
-                    supabaseClient.from("quick_transactions").upsert(payload)
-                    quickTransactionDao.updateSyncStatus(qt.id, 0)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                performRemoteMutationIfUnchanged(
+                    snapshot = qt,
+
+                    remoteMutation = { supabaseClient.from("quick_transactions").upsert(payload) },
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> quickTransactionDao.acknowledgeIfUnchanged(uploadedSnapshot) }
+                )
             }
         }
     }
@@ -74,9 +79,14 @@ class QuickTransactionSync @Inject constructor(
                 deleted = 0
             )
         }
+        if (remoteList.isEmpty() && quickTransactionDao.getQuickTransactions(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for quickTransaction is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
+            val pendingLocalChanges = quickTransactionDao.getUnsynced(userId)
             quickTransactionDao.deleteAllForUser(userId)
-            quickTransactionDao.insertOrReplace(entities)
+            quickTransactionDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }

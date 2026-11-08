@@ -26,12 +26,12 @@ class TransactionGroupSync @Inject constructor(
                 userId = group.userId,
                 priority = group.priority
             )
-            try {
-                supabaseClient.from("transaction_groups").upsert(payload)
-                groupDao.updateSyncStatus(group.id, 0)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            performRemoteMutationIfUnchanged(
+                    snapshot = group,
+
+                remoteMutation = { supabaseClient.from("transaction_groups").upsert(payload) },
+                acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> groupDao.acknowledgeIfUnchanged(uploadedSnapshot) }
+            )
         }
     }
 
@@ -50,9 +50,14 @@ class TransactionGroupSync @Inject constructor(
                 syncStatus = 0
             )
         }
+        if (remoteList.isEmpty() && groupDao.getGroups(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for group is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
+            val pendingLocalChanges = groupDao.getUnsyncedGroups(userId)
             groupDao.deleteAllForUser(userId)
-            groupDao.insertOrReplace(entities)
+            groupDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }

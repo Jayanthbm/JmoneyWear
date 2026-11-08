@@ -22,14 +22,19 @@ class BudgetSync @Inject constructor(
         val unsynced = budgetDao.getUnsyncedBudgets(userId)
         for (b in unsynced) {
             if (b.deleted == 1) {
-                try {
-                    supabaseClient.from("budgets").delete {
-                        filter { eq("id", b.id) }
-                    }
-                    budgetDao.delete(b.id)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                performRemoteMutationIfUnchanged(
+                    snapshot = b,
+
+                    remoteMutation = {
+                        supabaseClient.from("budgets").delete {
+                            filter {
+                                eq("id", b.id)
+                                eq("user_id", userId)
+                            }
+                        }
+                    },
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> budgetDao.deleteIfUnchanged(uploadedSnapshot) }
+                )
             } else {
                 val catList = try {
                     Json.decodeFromString<List<String>>(b.categories)
@@ -46,12 +51,12 @@ class BudgetSync @Inject constructor(
                     categories = catList,
                     userId = b.userId
                 )
-                try {
-                    supabaseClient.from("budgets").upsert(payload)
-                    budgetDao.updateSyncStatus(b.id, 0)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                performRemoteMutationIfUnchanged(
+                    snapshot = b,
+
+                    remoteMutation = { supabaseClient.from("budgets").upsert(payload) },
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> budgetDao.acknowledgeIfUnchanged(uploadedSnapshot) }
+                )
             }
         }
     }
@@ -80,9 +85,14 @@ class BudgetSync @Inject constructor(
                 deleted = 0
             )
         }
+        if (remoteList.isEmpty() && budgetDao.getBudgets(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for budget is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
+            val pendingLocalChanges = budgetDao.getUnsyncedBudgets(userId)
             budgetDao.deleteAllForUser(userId)
-            budgetDao.insertOrReplace(entities)
+            budgetDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }

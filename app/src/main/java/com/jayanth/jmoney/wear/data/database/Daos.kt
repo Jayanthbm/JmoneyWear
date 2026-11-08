@@ -4,10 +4,14 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
+    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): TransactionEntity?
+
     @Query("SELECT * FROM transactions WHERE user_id = :userId AND deleted = 0 ORDER BY transaction_timestamp DESC")
     fun getTransactionsFlow(userId: String): Flow<List<TransactionEntity>>
 
@@ -28,6 +32,16 @@ interface TransactionDao {
 
     @Query("UPDATE transactions SET tid = :tid, sync_status = 0 WHERE id = :id")
     suspend fun updateTidAndSyncStatus(id: String, tid: Int)
+
+    @Transaction
+    suspend fun updateTidAndSyncStatusIfUnchanged(snapshot: TransactionEntity, tid: Int) {
+        if (getById(snapshot.id) == snapshot) updateTidAndSyncStatus(snapshot.id, tid)
+    }
+
+    @Transaction
+    suspend fun deleteIfUnchanged(snapshot: TransactionEntity) {
+        if (getById(snapshot.id) == snapshot) delete(snapshot.id)
+    }
 
     @Query("DELETE FROM transactions WHERE id = :id")
     suspend fun delete(id: String)
@@ -68,6 +82,9 @@ interface TransactionDao {
 
 @Dao
 interface CategoryDao {
+    @Query("SELECT * FROM categories WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): CategoryEntity?
+
     @Query("SELECT * FROM categories WHERE user_id = :userId ORDER BY priority, name")
     fun getCategoriesFlow(userId: String): Flow<List<CategoryEntity>>
 
@@ -83,12 +100,20 @@ interface CategoryDao {
     @Query("UPDATE categories SET sync_status = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: String, status: Int)
 
+    @Transaction
+    suspend fun acknowledgeIfUnchanged(snapshot: CategoryEntity) {
+        if (getById(snapshot.id) == snapshot) updateSyncStatus(snapshot.id, 0)
+    }
+
     @Query("DELETE FROM categories WHERE user_id = :userId")
     suspend fun deleteAllForUser(userId: String)
 }
 
 @Dao
 interface PayeeDao {
+    @Query("SELECT * FROM payees WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): PayeeEntity?
+
     @Query("SELECT * FROM payees WHERE user_id = :userId ORDER BY priority, name")
     fun getPayeesFlow(userId: String): Flow<List<PayeeEntity>>
 
@@ -104,12 +129,20 @@ interface PayeeDao {
     @Query("UPDATE payees SET sync_status = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: String, status: Int)
 
+    @Transaction
+    suspend fun acknowledgeIfUnchanged(snapshot: PayeeEntity) {
+        if (getById(snapshot.id) == snapshot) updateSyncStatus(snapshot.id, 0)
+    }
+
     @Query("DELETE FROM payees WHERE user_id = :userId")
     suspend fun deleteAllForUser(userId: String)
 }
 
 @Dao
 interface QuickTransactionDao {
+    @Query("SELECT * FROM quick_transactions WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): QuickTransactionEntity?
+
     @Query("SELECT * FROM quick_transactions WHERE user_id = :userId AND deleted = 0 ORDER BY priority ASC, name")
     fun getQuickTransactionsFlow(userId: String): Flow<List<QuickTransactionEntity>>
 
@@ -125,8 +158,18 @@ interface QuickTransactionDao {
     @Query("UPDATE quick_transactions SET sync_status = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: String, status: Int)
 
+    @Transaction
+    suspend fun acknowledgeIfUnchanged(snapshot: QuickTransactionEntity) {
+        if (getById(snapshot.id) == snapshot) updateSyncStatus(snapshot.id, 0)
+    }
+
     @Query("DELETE FROM quick_transactions WHERE id = :id")
     suspend fun delete(id: String)
+
+    @Transaction
+    suspend fun deleteIfUnchanged(snapshot: QuickTransactionEntity) {
+        if (getById(snapshot.id) == snapshot) delete(snapshot.id)
+    }
 
     @Query("UPDATE quick_transactions SET deleted = 1, sync_status = 1 WHERE id = :id AND user_id = :userId")
     suspend fun softDelete(id: String, userId: String)
@@ -137,6 +180,9 @@ interface QuickTransactionDao {
 
 @Dao
 interface BudgetDao {
+    @Query("SELECT * FROM budgets WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): BudgetEntity?
+
     @Query("SELECT * FROM budgets WHERE user_id = :userId AND deleted = 0 ORDER BY name")
     fun getBudgetsFlow(userId: String): Flow<List<BudgetEntity>>
 
@@ -152,8 +198,18 @@ interface BudgetDao {
     @Query("UPDATE budgets SET sync_status = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: String, status: Int)
 
+    @Transaction
+    suspend fun acknowledgeIfUnchanged(snapshot: BudgetEntity) {
+        if (getById(snapshot.id) == snapshot) updateSyncStatus(snapshot.id, 0)
+    }
+
     @Query("DELETE FROM budgets WHERE id = :id")
     suspend fun delete(id: String)
+
+    @Transaction
+    suspend fun deleteIfUnchanged(snapshot: BudgetEntity) {
+        if (getById(snapshot.id) == snapshot) delete(snapshot.id)
+    }
 
     @Query("UPDATE budgets SET deleted = 1, sync_status = 1 WHERE id = :id")
     suspend fun softDelete(id: String)
@@ -164,6 +220,9 @@ interface BudgetDao {
 
 @Dao
 interface GoalDao {
+    @Query("SELECT * FROM goals WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): GoalEntity?
+
     @Query("SELECT * FROM goals WHERE user_id = :userId AND deleted = 0 ORDER BY name")
     fun getGoalsFlow(userId: String): Flow<List<GoalEntity>>
 
@@ -179,8 +238,18 @@ interface GoalDao {
     @Query("UPDATE goals SET sync_status = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: String, status: Int)
 
+    @Transaction
+    suspend fun acknowledgeIfUnchanged(snapshot: GoalEntity) {
+        if (getById(snapshot.id) == snapshot) updateSyncStatus(snapshot.id, 0)
+    }
+
     @Query("DELETE FROM goals WHERE id = :id")
     suspend fun delete(id: String)
+
+    @Transaction
+    suspend fun deleteIfUnchanged(snapshot: GoalEntity) {
+        if (getById(snapshot.id) == snapshot) delete(snapshot.id)
+    }
 
     @Query("UPDATE goals SET deleted = 1, sync_status = 1 WHERE id = :id")
     suspend fun softDelete(id: String)
@@ -191,6 +260,9 @@ interface GoalDao {
 
 @Dao
 interface TransactionGroupDao {
+    @Query("SELECT * FROM transaction_groups WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): TransactionGroupEntity?
+
     @Query("SELECT * FROM transaction_groups WHERE user_id = :userId ORDER BY priority")
     fun getGroupsFlow(userId: String): Flow<List<TransactionGroupEntity>>
 
@@ -205,6 +277,11 @@ interface TransactionGroupDao {
 
     @Query("UPDATE transaction_groups SET sync_status = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: String, status: Int)
+
+    @Transaction
+    suspend fun acknowledgeIfUnchanged(snapshot: TransactionGroupEntity) {
+        if (getById(snapshot.id) == snapshot) updateSyncStatus(snapshot.id, 0)
+    }
 
     @Query("DELETE FROM transaction_groups WHERE user_id = :userId")
     suspend fun deleteAllForUser(userId: String)

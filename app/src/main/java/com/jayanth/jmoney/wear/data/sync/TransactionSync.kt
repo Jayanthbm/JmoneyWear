@@ -5,6 +5,7 @@ import com.jayanth.jmoney.wear.data.database.AppDatabase
 import com.jayanth.jmoney.wear.data.database.TransactionDao
 import com.jayanth.jmoney.wear.data.database.TransactionEntity
 import com.jayanth.jmoney.wear.data.network.dto.SupabaseTransaction
+import com.jayanth.jmoney.wear.data.network.dto.SupabaseTransactionUpsert
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -28,16 +29,21 @@ class TransactionSync @Inject constructor(
         val unsynced = transactionDao.getUnsyncedTransactions(userId)
         for (tx in unsynced) {
             if (tx.deleted == 1) {
-                try {
-                    supabaseClient.from("transactions").delete {
-                        filter { eq("id", tx.id) }
-                    }
-                    transactionDao.delete(tx.id)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                performRemoteMutationIfUnchanged(
+                    snapshot = tx,
+
+                    remoteMutation = {
+                        supabaseClient.from("transactions").delete {
+                            filter {
+                                eq("id", tx.id)
+                                eq("user_id", userId)
+                            }
+                        }
+                    },
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> transactionDao.deleteIfUnchanged(uploadedSnapshot) }
+                )
             } else {
-                val payload = SupabaseTransaction(
+                val payload = SupabaseTransactionUpsert(
                     id = tx.id,
                     amount = tx.amount,
                     description = tx.description,
@@ -48,19 +54,38 @@ class TransactionSync @Inject constructor(
                     type = tx.type,
                     userId = tx.userId,
                     productLink = tx.productLink,
-                    tid = tx.tid,
                     latitude = tx.latitude,
                     longitude = tx.longitude
                 )
-                try {
-                    val result = supabaseClient.from("transactions").upsert(payload) {
-                        select(Columns.list("tid"))
-                    }.decodeSingle<TidResponse>()
-                    transactionDao.updateTidAndSyncStatus(tx.id, result.tid)
-                } catch (e: Exception) {
-                    supabaseClient.from("transactions").upsert(payload)
-                    transactionDao.updateSyncStatus(tx.id, 0)
-                }
+                performRemoteMutationIfUnchanged(
+                    snapshot = tx,
+
+                    remoteMutation = {
+                        resolveTransactionUploadTid(
+                            upsertReturningTid = {
+                                supabaseClient.from("transactions").upsert(payload) {
+                                    select(Columns.list("tid"))
+                                }.decodeSingle<TidResponse>().tid
+                            },
+                            retryUpsert = {
+                                supabaseClient.from("transactions").upsert(payload)
+                            },
+                            readServerTid = {
+                                supabaseClient.from("transactions").select(
+                                    columns = Columns.list("tid")
+                                ) {
+                                    filter {
+                                        eq("id", tx.id)
+                                        eq("user_id", userId)
+                                    }
+                                }.decodeSingle<TidResponse>().tid
+                            }
+                        )
+                    },
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, uploadedTid ->
+                        transactionDao.updateTidAndSyncStatusIfUnchanged(uploadedSnapshot, uploadedTid)
+                    }
+                )
             }
         }
     }
@@ -69,15 +94,9 @@ class TransactionSync @Inject constructor(
         var lastTid = 0
         if (isPartial) {
             lastTid = transactionDao.getMaxTid(userId) ?: 0
-        } else {
-            transactionDao.deleteAllForUser(userId)
         }
 
-        val chunkSize = 1000
-        var offset = 0
-        var hasMore = true
-
-        while (hasMore) {
+        val remoteEntities = fetchCompleteRemoteSnapshot(pageSize = 1000) { offset, pageSize ->
             val response = supabaseClient.from("transactions").select(
                 columns = Columns.raw("""
                     id, amount, description, transaction_timestamp, category_id, payee_id, group_id, type, user_id, product_link, tid, latitude, longitude, created_at, updated_at,
@@ -91,44 +110,55 @@ class TransactionSync @Inject constructor(
                     gt("tid", lastTid)
                 }
                 order("tid", Order.ASCENDING)
-                range(offset.toLong(), (offset + chunkSize - 1).toLong())
+                range(offset.toLong(), (offset + pageSize - 1).toLong())
             }
 
-            val remoteTxList = response.decodeList<SupabaseTransaction>()
-            if (remoteTxList.isEmpty()) {
-                hasMore = false
-            } else {
-                val entities = remoteTxList.map { item ->
-                    TransactionEntity(
-                        id = item.id,
-                        amount = item.amount,
-                        description = item.description,
-                        transactionTimestamp = item.transactionTimestamp,
-                        date = getTransactionDate(item.transactionTimestamp),
-                        categoryId = item.categoryId,
-                        categoryName = item.categories?.name,
-                        categoryIcon = item.categories?.icon,
-                        categoryAppIcon = item.categories?.appIcon,
-                        payeeId = item.payeeId,
-                        payeeName = item.payees?.name,
-                        payeeLogo = item.payees?.logo,
-                        type = item.type,
-                        userId = item.userId,
-                        productLink = item.productLink,
-                        tid = item.tid,
-                        latitude = item.latitude,
-                        longitude = item.longitude,
-                        groupId = item.groupId,
-                        groupName = item.transactionGroups?.name,
-                        syncStatus = 0,
-                        createdAt = item.createdAt ?: Instant.now().toString(),
-                        updatedAt = item.updatedAt ?: Instant.now().toString()
-                    )
-                }
-                db.withTransaction {
-                    transactionDao.insertOrReplace(entities)
-                }
-                offset += chunkSize
+            response.decodeList<SupabaseTransaction>().map { item ->
+                TransactionEntity(
+                    id = item.id,
+                    amount = item.amount,
+                    description = item.description,
+                    transactionTimestamp = item.transactionTimestamp,
+                    date = getTransactionDate(item.transactionTimestamp),
+                    categoryId = item.categoryId,
+                    categoryName = item.categories?.name,
+                    categoryIcon = item.categories?.icon,
+                    categoryAppIcon = item.categories?.appIcon,
+                    payeeId = item.payeeId,
+                    payeeName = item.payees?.name,
+                    payeeLogo = item.payees?.logo,
+                    type = item.type,
+                    userId = item.userId,
+                    productLink = item.productLink,
+                    tid = item.tid,
+                    latitude = item.latitude,
+                    longitude = item.longitude,
+                    groupId = item.groupId,
+                    groupName = item.transactionGroups?.name,
+                    syncStatus = 0,
+                    createdAt = item.createdAt ?: Instant.now().toString(),
+                    updatedAt = item.updatedAt ?: Instant.now().toString()
+                )
+            }
+        }
+
+        if (!isPartial) {
+            requireSafeRemoteSnapshot(
+                remoteCount = remoteEntities.size,
+                localCount = transactionDao.getTransactions(userId).size,
+                entityName = "transaction"
+            )
+        }
+
+        // Do not touch the local snapshot until every remote page has been fetched
+        // and decoded successfully. Preserve pending local edits and tombstones.
+        db.withTransaction {
+            if (!isPartial) {
+                val pendingLocalChanges = transactionDao.getUnsyncedTransactions(userId)
+                transactionDao.deleteAllForUser(userId)
+                transactionDao.insertOrReplace(mergeRemoteTransactionsWithPendingChanges(remoteEntities, pendingLocalChanges))
+            } else if (remoteEntities.isNotEmpty()) {
+                transactionDao.insertOrReplace(remoteEntities)
             }
         }
     }

@@ -30,7 +30,7 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "jmoney.db"
-        ).fallbackToDestructiveMigration(true).build()
+        ).build()
     }
 
     @Provides

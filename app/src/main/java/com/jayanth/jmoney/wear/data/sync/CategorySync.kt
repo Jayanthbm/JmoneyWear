@@ -29,12 +29,12 @@ class CategorySync @Inject constructor(
                 isLivingCost = cat.isLivingCost,
                 priority = cat.priority
             )
-            try {
-                supabaseClient.from("categories").upsert(payload)
-                categoryDao.updateSyncStatus(cat.id, 0)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            performRemoteMutationIfUnchanged(
+                    snapshot = cat,
+
+                remoteMutation = { supabaseClient.from("categories").upsert(payload) },
+                acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> categoryDao.acknowledgeIfUnchanged(uploadedSnapshot) }
+            )
         }
     }
 
@@ -56,9 +56,14 @@ class CategorySync @Inject constructor(
                 priority = item.priority
             )
         }
+        if (remoteList.isEmpty() && categoryDao.getCategories(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for category is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
+            val pendingLocalChanges = categoryDao.getUnsyncedCategories(userId)
             categoryDao.deleteAllForUser(userId)
-            categoryDao.insertOrReplace(entities)
+            categoryDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }

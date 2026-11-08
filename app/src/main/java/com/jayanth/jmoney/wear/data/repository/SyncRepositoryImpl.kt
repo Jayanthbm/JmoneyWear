@@ -27,6 +27,7 @@ import com.jayanth.jmoney.wear.data.network.dto.SupabaseTransaction
 import com.jayanth.jmoney.wear.data.sync.*
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,64 +61,85 @@ class SyncRepositoryImpl @Inject constructor(
     override val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
     private val sharedPrefs = context.getSharedPreferences("sync_prefs", Context.MODE_PRIVATE)
+    private val syncOperationGate = SyncOperationGate()
 
     override suspend fun runFullSync(): Result<Unit> {
-        val userId = authRepository.getCurrentUserId() ?: return Result.failure(Exception("User not authenticated"))
+        val userId = authRepository.getCurrentUserId()
+        if (userId == null) {
+            val error = IllegalStateException("User not authenticated")
+            _syncState.value = SyncState.Error(error.message ?: "User not authenticated")
+            return Result.failure(error)
+        }
         return runSync(userId, isPartial = false)
     }
 
     override suspend fun runPartialSync(): Result<Unit> {
-        val userId = authRepository.getCurrentUserId() ?: return Result.failure(Exception("User not authenticated"))
+        val userId = authRepository.getCurrentUserId()
+        if (userId == null) {
+            val error = IllegalStateException("User not authenticated")
+            _syncState.value = SyncState.Error(error.message ?: "User not authenticated")
+            return Result.failure(error)
+        }
         return runSync(userId, isPartial = true)
     }
 
     private suspend fun runSync(userId: String, isPartial: Boolean): Result<Unit> {
-        return runCatching {
-            _syncState.value = SyncState.Syncing("Pushing local changes...")
-            pushLocalChanges(userId)
+        return syncOperationGate.withLock {
+            runCatching {
+                check(authRepository.getCurrentUserId() == userId) {
+                    "Authenticated user changed before sync started"
+                }
 
-            _syncState.value = SyncState.Syncing("Syncing Transactions...")
-            transactionSync.syncRemoteChanges(userId, isPartial)
+                executeSyncPipeline(
+                    onStage = { stage -> _syncState.value = SyncState.Syncing(stage) },
+                    pushLocalChanges = { pushLocalChanges(userId) },
+                    syncTransactions = { transactionSync.syncRemoteChanges(userId, isPartial) },
+                    syncCategories = { categorySync.syncRemoteChanges(userId) },
+                    syncPayees = { payeeSync.syncRemoteChanges(userId) },
+                    syncTransactionGroups = { transactionGroupSync.syncRemoteChanges(userId) },
+                    syncBudgets = { budgetSync.syncRemoteChanges(userId) },
+                    syncGoals = { goalSync.syncRemoteChanges(userId) },
+                    syncQuickTransactions = { quickTransactionSync.syncRemoteChanges(userId) }
+                )
 
-            _syncState.value = SyncState.Syncing("Syncing Categories...")
-            categorySync.syncRemoteChanges(userId)
-
-            _syncState.value = SyncState.Syncing("Syncing Payees...")
-            payeeSync.syncRemoteChanges(userId)
-
-            _syncState.value = SyncState.Syncing("Syncing Transaction Groups...")
-            transactionGroupSync.syncRemoteChanges(userId)
-
-            _syncState.value = SyncState.Syncing("Syncing Budgets...")
-            budgetSync.syncRemoteChanges(userId)
-
-            _syncState.value = SyncState.Syncing("Syncing Goals...")
-            goalSync.syncRemoteChanges(userId)
-
-            _syncState.value = SyncState.Syncing("Syncing Quick Transactions...")
-            quickTransactionSync.syncRemoteChanges(userId)
-
-            sharedPrefs.edit().putLong("last_sync_timestamp_$userId", System.currentTimeMillis()).apply()
-            _syncState.value = SyncState.Success
-        }.onFailure { error ->
-            _syncState.value = SyncState.Error(error.localizedMessage ?: "Sync failed")
+                sharedPrefs.edit()
+                    .putLong("last_sync_timestamp_$userId", System.currentTimeMillis())
+                    .apply()
+                _syncState.value = SyncState.Success
+            }.onFailure { error ->
+                if (error is CancellationException) throw error
+                _syncState.value = SyncState.Error(error.localizedMessage ?: "Sync failed")
+            }
         }
     }
 
     override suspend fun resetLocalData(): Result<Unit> {
-        val userId = authRepository.getCurrentUserId() ?: return Result.failure(Exception("User not authenticated"))
-        return runCatching {
-            db.withTransaction {
-                transactionDao.deleteAllForUser(userId)
-                categoryDao.deleteAllForUser(userId)
-                payeeDao.deleteAllForUser(userId)
-                quickTransactionDao.deleteAllForUser(userId)
-                budgetDao.deleteAllForUser(userId)
-                goalDao.deleteAllForUser(userId)
-                groupDao.deleteAllForUser(userId)
+        val userId = authRepository.getCurrentUserId()
+            ?: return Result.failure(Exception("User not authenticated"))
+
+        return syncOperationGate.withLock {
+            runCatching {
+                check(authRepository.getCurrentUserId() == userId) {
+                    "Authenticated user changed before local data reset"
+                }
+
+                db.withTransaction {
+                    transactionDao.deleteAllForUser(userId)
+                    categoryDao.deleteAllForUser(userId)
+                    payeeDao.deleteAllForUser(userId)
+                    quickTransactionDao.deleteAllForUser(userId)
+                    budgetDao.deleteAllForUser(userId)
+                    goalDao.deleteAllForUser(userId)
+                    groupDao.deleteAllForUser(userId)
+                }
+                sharedPrefs.edit().remove("last_sync_timestamp_$userId").apply()
+                _syncState.value = SyncState.Idle
+            }.onFailure { error ->
+                if (error is CancellationException) throw error
+                _syncState.value = SyncState.Error(
+                    error.localizedMessage ?: "Unable to reset local data"
+                )
             }
-            sharedPrefs.edit().remove("last_sync_timestamp_$userId").apply()
-            _syncState.value = SyncState.Idle
         }
     }
 

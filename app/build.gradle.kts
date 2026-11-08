@@ -11,7 +11,7 @@ plugins {
 
 android {
     namespace = "com.jayanth.jmoney.wear"
-    compileSdk = 36
+    compileSdk = 37
 
     // Load development credentials from local.properties
     val localProperties = Properties()
@@ -39,9 +39,9 @@ android {
     defaultConfig {
         applicationId = "com.jayanth.jmoney.wear"
         minSdk = 30
-        targetSdk = 36
-        versionCode = (project.findProperty("app.versionCode") as? String)?.toInt() ?: 3
-        versionName = (project.findProperty("app.versionName") as? String) ?: "1.2.0"
+        targetSdk = 37
+        versionCode = (project.findProperty("app.versionCode") as? String)?.toInt() ?: 7
+        versionName = (project.findProperty("app.versionName") as? String) ?: "2.1.0"
 
         val devEmail = localProperties.getProperty("dev.email") ?: ""
         val devPassword = localProperties.getProperty("dev.password") ?: ""
@@ -67,13 +67,19 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     useLibrary("wear-sdk")
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+kapt {
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 }
 
@@ -133,6 +139,8 @@ dependencies {
 
     // Kotlinx Serialization
     implementation(libs.kotlinx.serialization.json)
+
+    testImplementation(libs.junit)
 
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.ui.test.junit4)
