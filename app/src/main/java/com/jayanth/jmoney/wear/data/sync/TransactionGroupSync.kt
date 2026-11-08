@@ -28,10 +28,9 @@ class TransactionGroupSync @Inject constructor(
             )
             performRemoteMutationIfUnchanged(
                     snapshot = group,
-                    readCurrent = { groupDao.getById(group.id) },
 
                 remoteMutation = { supabaseClient.from("transaction_groups").upsert(payload) },
-                acknowledgeLocal = { groupDao.updateSyncStatus(group.id, 0) }
+                acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> groupDao.acknowledgeIfUnchanged(uploadedSnapshot) }
             )
         }
     }
