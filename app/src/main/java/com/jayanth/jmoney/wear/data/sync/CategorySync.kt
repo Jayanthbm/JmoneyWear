@@ -29,7 +29,10 @@ class CategorySync @Inject constructor(
                 isLivingCost = cat.isLivingCost,
                 priority = cat.priority
             )
-            performRemoteMutation(
+            performRemoteMutationIfUnchanged(
+                    snapshot = cat,
+                    readCurrent = { categoryDao.getById(cat.id) },
+
                 remoteMutation = { supabaseClient.from("categories").upsert(payload) },
                 acknowledgeLocal = { categoryDao.updateSyncStatus(cat.id, 0) }
             )
