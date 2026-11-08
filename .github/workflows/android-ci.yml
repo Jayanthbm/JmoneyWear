@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-ci-${{ github.ref }}
@@ -54,6 +54,17 @@ jobs:
 
       - name: Run unit tests, lint and assemble debug APK
         run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
+
+      - name: Commit generated Room schema
+        if: success() && github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/schemas
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(db): export Room schema [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
