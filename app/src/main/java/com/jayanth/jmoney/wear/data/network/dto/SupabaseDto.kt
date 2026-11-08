@@ -25,6 +25,27 @@ data class SupabaseTransaction(
     @SerialName("transaction_groups") val transactionGroups: GroupRelation? = null
 )
 
+/**
+ * Write payload for transactions. The database owns `tid`; omitting it lets
+ * the server sequence/default assign the cursor instead of accidentally
+ * inserting the local placeholder value (commonly zero).
+ */
+@Serializable
+data class SupabaseTransactionUpsert(
+    val id: String,
+    val amount: Double,
+    val description: String? = null,
+    @SerialName("transaction_timestamp") val transactionTimestamp: String,
+    @SerialName("category_id") val categoryId: String? = null,
+    @SerialName("payee_id") val payeeId: String? = null,
+    @SerialName("group_id") val groupId: String? = null,
+    val type: String,
+    @SerialName("user_id") val userId: String,
+    @SerialName("product_link") val productLink: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null
+)
+
 @Serializable
 data class CategoryRelation(
     val name: String,
