@@ -1,6 +1,6 @@
 # Jmoney Wear Reliability Regression Checklist
 
-Run these checks only during the final physical-watch testing stage. No intermediate watch testing is required.
+Run these checks only during the final Wear OS emulator testing stage. No intermediate emulator testing is required.
 
 ## Tile authentication and rendering
 
