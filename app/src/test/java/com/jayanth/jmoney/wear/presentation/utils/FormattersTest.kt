@@ -8,11 +8,17 @@ class FormattersTest {
     @Test
     fun formatCurrencyUsesIndianDigitGrouping() {
         assertEquals("₹1,23,456", formatCurrency(123456.0))
+        assertEquals("₹1,23,45,678", formatCurrency(12345678.0))
     }
 
     @Test
     fun formatCurrencyKeepsTwoFractionDigitsWhenNeeded() {
         assertEquals("₹1,23,456.78", formatCurrency(123456.78))
+    }
+
+    @Test
+    fun formatCurrencyPreservesNegativeSign() {
+        assertEquals("-₹1,23,456.78", formatCurrency(-123456.78))
     }
 
     @Test
