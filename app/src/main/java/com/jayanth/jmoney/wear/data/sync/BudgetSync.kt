@@ -80,6 +80,10 @@ class BudgetSync @Inject constructor(
                 deleted = 0
             )
         }
+        if (remoteList.isEmpty() && budgetDao.getBudgets(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for budget is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
             val pendingLocalChanges = budgetDao.getUnsyncedBudgets(userId)
             budgetDao.deleteAllForUser(userId)
