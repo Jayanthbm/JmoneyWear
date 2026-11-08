@@ -30,8 +30,8 @@ class TransactionGroupSync @Inject constructor(
                 supabaseClient.from("transaction_groups").upsert(payload)
                 groupDao.updateSyncStatus(group.id, 0)
             } catch (e: Exception) {
-                e.printStackTrace()
-            }
+                    throw e
+                }
         }
     }
 
@@ -51,8 +51,9 @@ class TransactionGroupSync @Inject constructor(
             )
         }
         db.withTransaction {
+            val pendingLocalChanges = groupDao.getUnsyncedGroups(userId)
             groupDao.deleteAllForUser(userId)
-            groupDao.insertOrReplace(entities)
+            groupDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }
