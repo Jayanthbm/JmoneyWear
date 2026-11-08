@@ -69,7 +69,7 @@ Run from the repository root:
 ./gradlew --no-daemon assembleDebug
 ```
 
-Combined CI command:
+Optional combined local verification and APK build:
 
 ```bash
 ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
