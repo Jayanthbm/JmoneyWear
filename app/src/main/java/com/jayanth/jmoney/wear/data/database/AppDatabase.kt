@@ -14,7 +14,7 @@ import androidx.room.RoomDatabase
         TransactionGroupEntity::class
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
