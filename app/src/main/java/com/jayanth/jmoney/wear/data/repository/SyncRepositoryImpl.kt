@@ -77,6 +77,7 @@ class SyncRepositoryImpl @Inject constructor(
     private suspend fun runSync(userId: String, isPartial: Boolean): Result<Unit> {
         return syncMutex.withLock {
             runCatching {
+            check(authRepository.getCurrentUserId() == userId) { "Authenticated user changed before sync started" }
             _syncState.value = SyncState.Syncing("Pushing local changes...")
             pushLocalChanges(userId)
 
@@ -111,7 +112,9 @@ class SyncRepositoryImpl @Inject constructor(
 
     override suspend fun resetLocalData(): Result<Unit> {
         val userId = authRepository.getCurrentUserId() ?: return Result.failure(Exception("User not authenticated"))
-        return runCatching {
+        return syncMutex.withLock {
+            runCatching {
+            check(authRepository.getCurrentUserId() == userId) { "Authenticated user changed before local data reset" }
             db.withTransaction {
                 transactionDao.deleteAllForUser(userId)
                 categoryDao.deleteAllForUser(userId)
@@ -123,6 +126,7 @@ class SyncRepositoryImpl @Inject constructor(
             }
             sharedPrefs.edit().remove("last_sync_timestamp_$userId").apply()
             _syncState.value = SyncState.Idle
+            }
         }
     }
 
