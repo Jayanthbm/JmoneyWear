@@ -74,6 +74,10 @@ class QuickTransactionSync @Inject constructor(
                 deleted = 0
             )
         }
+        if (remoteList.isEmpty() && quickTransactionDao.getQuickTransactions(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for quickTransaction is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
             val pendingLocalChanges = quickTransactionDao.getUnsynced(userId)
             quickTransactionDao.deleteAllForUser(userId)
