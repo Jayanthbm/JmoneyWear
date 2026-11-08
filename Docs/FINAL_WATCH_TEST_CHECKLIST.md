@@ -1,6 +1,6 @@
-# JmoneyWear — Final Watch Test Checklist
+# JmoneyWear — Final Wear OS Emulator Test Checklist
 
-Use this checklist only after all modernization phases are complete and a consolidated build is provided.
+Use this checklist only after all modernization phases are complete and a consolidated debug APK is provided. Run it on a Wear OS emulator before considering a physical-watch test.
 
 ## Before installing
 
@@ -38,7 +38,7 @@ Use this checklist only after all modernization phases are complete and a consol
 
 ## Tiles
 
-- [ ] Add each supported JmoneyWear tile from the watch's tile editor.
+- [ ] Add each supported JmoneyWear tile from the emulator's tile editor.
 - [ ] Confirm tiles render without blank states or clipped content.
 - [ ] Add a transaction and sync; verify affected tiles refresh.
 - [ ] Verify action-only tiles still launch the intended app action.
@@ -59,10 +59,17 @@ Use this checklist only after all modernization phases are complete and a consol
 
 - [ ] Navigate repeatedly between all pages.
 - [ ] Scroll long transaction/budget/goal lists and use scroll-to-top controls.
-- [ ] Verify the watch remains responsive while background sync is running.
+- [ ] Verify the emulator remains responsive while background sync is running.
 - [ ] Confirm no unexpected app crashes, freezes, or battery drain.
 - [ ] Leave the app in the background and verify scheduled sync does not disrupt normal watch use.
 
 ## Report back
 
-Include the APK version, watch model, Wear OS version, steps performed, expected result, actual result, and screenshots/video for any visual or functional issue.
+Include the APK version, emulator device profile, Wear OS version, steps performed, expected result, actual result, and screenshots/video for any visual or functional issue.
+
+## Emulator setup notes
+
+- [ ] Use a round Wear OS emulator profile representative of the target watch size; also try a second screen size if available.
+- [ ] Keep the existing emulator app data when testing an in-place upgrade. Do not clear app storage or uninstall to bypass an install/signature issue.
+- [ ] Capture Logcat around tile host launches, cold starts, authentication restoration, and sync failures.
+- [ ] If the CI debug APK cannot update the installed build because its debug signing key differs, install it only on a disposable emulator profile or build locally with the matching signing key; do not delete the user's existing app data.
