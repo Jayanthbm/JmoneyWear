@@ -57,6 +57,43 @@ class TransactionUploadRecoveryTest {
     }
 
     @Test
+    fun cancellationDuringRetryIsPropagated() {
+        var readCount = 0
+        assertThrows(CancellationException::class.java) {
+            runBlocking {
+                resolveTransactionUploadTid(
+                    upsertReturningTid = { throw IOException("Ambiguous response") },
+                    retryUpsert = { throw CancellationException("Cancelled during retry") },
+                    readServerTid = {
+                        readCount++
+                        10
+                    }
+                )
+            }
+        }
+        assertEquals(0, readCount)
+    }
+
+    @Test
+    fun readbackFailureRetainsOriginalWriteFailureAsSuppressed() {
+        val firstFailure = IOException("Initial response failed")
+        val readFailure = IOException("Could not read server tid")
+        val thrown = assertThrows(IOException::class.java) {
+            runBlocking {
+                resolveTransactionUploadTid(
+                    upsertReturningTid = { throw firstFailure },
+                    retryUpsert = { },
+                    readServerTid = { throw readFailure }
+                )
+            }
+        }
+
+        assertSame(readFailure, thrown)
+        assertEquals(1, thrown.suppressed.size)
+        assertSame(firstFailure, thrown.suppressed[0])
+    }
+
+    @Test
     fun retryFailureRetainsOriginalFailureAsSuppressed() {
         val firstFailure = IOException("Initial response failed")
         val retryFailure = IOException("Retry write failed")
