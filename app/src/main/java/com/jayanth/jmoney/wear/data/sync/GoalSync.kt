@@ -20,14 +20,17 @@ class GoalSync @Inject constructor(
         val unsynced = goalDao.getUnsyncedGoals(userId)
         for (g in unsynced) {
             if (g.deleted == 1) {
-                try {
-                    supabaseClient.from("goals").delete {
-                        filter { eq("id", g.id) }
-                    }
-                    goalDao.delete(g.id)
-                } catch (e: Exception) {
-                    throw e
-                }
+                performRemoteMutation(
+                    remoteMutation = {
+                        supabaseClient.from("goals").delete {
+                            filter {
+                                eq("id", g.id)
+                                eq("user_id", userId)
+                            }
+                        }
+                    },
+                    acknowledgeLocal = { goalDao.delete(g.id) }
+                )
             } else {
                 val payload = SupabaseGoal(
                     id = g.id,
@@ -37,12 +40,10 @@ class GoalSync @Inject constructor(
                     currentAmount = g.currentAmount,
                     userId = g.userId
                 )
-                try {
-                    supabaseClient.from("goals").upsert(payload)
-                    goalDao.updateSyncStatus(g.id, 0)
-                } catch (e: Exception) {
-                    throw e
-                }
+                performRemoteMutation(
+                    remoteMutation = { supabaseClient.from("goals").upsert(payload) },
+                    acknowledgeLocal = { goalDao.updateSyncStatus(g.id, 0) }
+                )
             }
         }
     }
