@@ -41,7 +41,7 @@ class SettingsViewModel @Inject constructor(
             syncMessage = when (syncState) {
                 is SyncState.Syncing -> syncState.stage
                 is SyncState.Error -> "Sync failed: ${syncState.message}"
-                SyncState.Success -> "Full sync completed"
+                SyncState.Success -> "Sync completed"
                 SyncState.Idle -> null
             }
         )
