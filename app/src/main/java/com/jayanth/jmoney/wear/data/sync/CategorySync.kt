@@ -29,12 +29,10 @@ class CategorySync @Inject constructor(
                 isLivingCost = cat.isLivingCost,
                 priority = cat.priority
             )
-            try {
-                supabaseClient.from("categories").upsert(payload)
-                categoryDao.updateSyncStatus(cat.id, 0)
-            } catch (e: Exception) {
-                    throw e
-                }
+            performRemoteMutation(
+                remoteMutation = { supabaseClient.from("categories").upsert(payload) },
+                acknowledgeLocal = { categoryDao.updateSyncStatus(cat.id, 0) }
+            )
         }
     }
 
