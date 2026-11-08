@@ -41,6 +41,7 @@ import com.jayanth.jmoney.wear.presentation.theme.JmoneyTheme
 import com.jayanth.jmoney.wear.data.repository.SyncRepository
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.AppScaffold
+import androidx.wear.compose.material3.HorizontalPagerScaffold
 import androidx.wear.compose.material3.MaterialTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -114,21 +115,23 @@ fun WearApp(
                             }
                         }
 
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier.fillMaxSize(),
-                            userScrollEnabled = !isOverlayOpen
-                        ) { page ->
-                            when (page) {
-                                0 -> DashboardScreen(
-                                    initialAction = initialAction,
-                                    onConsumeAction = onConsumeAction,
-                                    onOverlayStateChanged = { isOverlayOpen = it }
-                                )
-                                1 -> TransactionsScreen()
-                                2 -> BudgetsScreen()
-                                3 -> GoalsScreen()
-                                4 -> SettingsScreen()
+                        HorizontalPagerScaffold(pagerState = pagerState) {
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                                userScrollEnabled = !isOverlayOpen
+                            ) { page ->
+                                when (page) {
+                                    0 -> DashboardScreen(
+                                        initialAction = initialAction,
+                                        onConsumeAction = onConsumeAction,
+                                        onOverlayStateChanged = { isOverlayOpen = it }
+                                    )
+                                    1 -> TransactionsScreen()
+                                    2 -> BudgetsScreen()
+                                    3 -> GoalsScreen()
+                                    4 -> SettingsScreen()
+                                }
                             }
                         }
                     }
