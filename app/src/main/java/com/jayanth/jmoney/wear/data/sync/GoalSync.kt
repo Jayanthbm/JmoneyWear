@@ -26,7 +26,7 @@ class GoalSync @Inject constructor(
                     }
                     goalDao.delete(g.id)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    throw e
                 }
             } else {
                 val payload = SupabaseGoal(
@@ -41,7 +41,7 @@ class GoalSync @Inject constructor(
                     supabaseClient.from("goals").upsert(payload)
                     goalDao.updateSyncStatus(g.id, 0)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    throw e
                 }
             }
         }
@@ -65,8 +65,9 @@ class GoalSync @Inject constructor(
             )
         }
         db.withTransaction {
+            val pendingLocalChanges = goalDao.getUnsyncedGoals(userId)
             goalDao.deleteAllForUser(userId)
-            goalDao.insertOrReplace(entities)
+            goalDao.insertOrReplace(entities + pendingLocalChanges)
         }
     }
 }
