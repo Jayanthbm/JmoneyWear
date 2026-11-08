@@ -139,7 +139,7 @@ class TransactionSync @Inject constructor(
             if (!isPartial) {
                 val pendingLocalChanges = transactionDao.getUnsyncedTransactions(userId)
                 transactionDao.deleteAllForUser(userId)
-                transactionDao.insertOrReplace(remoteEntities + pendingLocalChanges)
+                transactionDao.insertOrReplace(mergeRemoteTransactionsWithPendingChanges(remoteEntities, pendingLocalChanges))
             } else if (remoteEntities.isNotEmpty()) {
                 transactionDao.insertOrReplace(remoteEntities)
             }
