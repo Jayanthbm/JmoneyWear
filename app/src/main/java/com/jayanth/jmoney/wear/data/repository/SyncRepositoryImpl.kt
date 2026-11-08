@@ -86,29 +86,17 @@ class SyncRepositoryImpl @Inject constructor(
                     "Authenticated user changed before sync started"
                 }
 
-                _syncState.value = SyncState.Syncing("Pushing local changes...")
-                pushLocalChanges(userId)
-
-                _syncState.value = SyncState.Syncing("Syncing Transactions...")
-                transactionSync.syncRemoteChanges(userId, isPartial)
-
-                _syncState.value = SyncState.Syncing("Syncing Categories...")
-                categorySync.syncRemoteChanges(userId)
-
-                _syncState.value = SyncState.Syncing("Syncing Payees...")
-                payeeSync.syncRemoteChanges(userId)
-
-                _syncState.value = SyncState.Syncing("Syncing Transaction Groups...")
-                transactionGroupSync.syncRemoteChanges(userId)
-
-                _syncState.value = SyncState.Syncing("Syncing Budgets...")
-                budgetSync.syncRemoteChanges(userId)
-
-                _syncState.value = SyncState.Syncing("Syncing Goals...")
-                goalSync.syncRemoteChanges(userId)
-
-                _syncState.value = SyncState.Syncing("Syncing Quick Transactions...")
-                quickTransactionSync.syncRemoteChanges(userId)
+                executeSyncPipeline(
+                    onStage = { stage -> _syncState.value = SyncState.Syncing(stage) },
+                    pushLocalChanges = { pushLocalChanges(userId) },
+                    syncTransactions = { transactionSync.syncRemoteChanges(userId, isPartial) },
+                    syncCategories = { categorySync.syncRemoteChanges(userId) },
+                    syncPayees = { payeeSync.syncRemoteChanges(userId) },
+                    syncTransactionGroups = { transactionGroupSync.syncRemoteChanges(userId) },
+                    syncBudgets = { budgetSync.syncRemoteChanges(userId) },
+                    syncGoals = { goalSync.syncRemoteChanges(userId) },
+                    syncQuickTransactions = { quickTransactionSync.syncRemoteChanges(userId) }
+                )
 
                 sharedPrefs.edit()
                     .putLong("last_sync_timestamp_$userId", System.currentTimeMillis())
