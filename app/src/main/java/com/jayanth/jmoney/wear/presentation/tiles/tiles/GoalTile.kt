@@ -43,7 +43,7 @@ class GoalTile {
             if (!isLoggedIn) {
                 return PrimaryLayout.Builder(deviceParameters)
                     .setContent(
-                        Text.Builder(context, "Please log in on watch")
+                        Text.Builder(context, "Open Jmoney to reconnect")
                             .setTypography(Typography.TYPOGRAPHY_BODY1)
                             .setColor(ColorBuilders.argb(TileTheme.TEXT))
                             .build()
