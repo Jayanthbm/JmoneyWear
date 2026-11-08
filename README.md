@@ -97,4 +97,4 @@ The version is controlled by `app.versionCode` and `app.versionName` in `gradle.
 
 ## CI artifacts
 
-Open the repository's **Actions → Android CI** workflow, select a successful run, and download the `jmoneywear-debug-apk` artifact. Artifacts are retained for 14 days.
+Open the repository's **Actions → Android CI** workflow, select a successful run, and download the `jmoneywear-debug-apk` artifact. Artifacts are retained for 14 days. A GitHub Actions debug APK is signed with the runner's temporary debug key and may not install as an update over an APK signed with your local debug key. For a data-preserving in-place update, build locally using the same signing key as the installed app. Do not uninstall the existing app merely to work around a signature mismatch, because that can erase local-only Room data.
