@@ -47,6 +47,28 @@ class TransactionSnapshotMergerTest {
         assertEquals("Local deletion", result.single().description)
     }
 
+    @Test
+    fun pendingLocalOnlyRowsAreRetainedAlongsideRemoteRows() {
+        val remote = listOf(transaction(id = "remote-only"))
+        val pending = listOf(transaction(id = "local-only", syncStatus = 1))
+
+        val result = mergeRemoteTransactionsWithPendingChanges(remote, pending)
+
+        assertEquals(setOf("remote-only", "local-only"), result.map { it.id }.toSet())
+        assertEquals(2, result.size)
+    }
+
+    @Test
+    fun duplicateRemoteIdsResolveToTheLastFetchedVersion() {
+        val first = transaction(id = "duplicate", description = "Older fetched row")
+        val latest = transaction(id = "duplicate", description = "Latest fetched row")
+
+        val result = mergeRemoteTransactionsWithPendingChanges(listOf(first, latest), emptyList())
+
+        assertEquals(1, result.size)
+        assertEquals("Latest fetched row", result.single().description)
+    }
+
     private fun transaction(
         id: String,
         description: String? = "Test transaction",
