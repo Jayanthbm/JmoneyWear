@@ -50,6 +50,10 @@ class TransactionGroupSync @Inject constructor(
                 syncStatus = 0
             )
         }
+        if (remoteList.isEmpty() && groupDao.getGroups(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for group is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
             val pendingLocalChanges = groupDao.getUnsyncedGroups(userId)
             groupDao.deleteAllForUser(userId)
