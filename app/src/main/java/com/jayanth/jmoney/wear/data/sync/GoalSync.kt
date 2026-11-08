@@ -20,7 +20,10 @@ class GoalSync @Inject constructor(
         val unsynced = goalDao.getUnsyncedGoals(userId)
         for (g in unsynced) {
             if (g.deleted == 1) {
-                performRemoteMutation(
+                performRemoteMutationIfUnchanged(
+                    snapshot = g,
+                    readCurrent = { goalDao.getById(g.id) },
+
                     remoteMutation = {
                         supabaseClient.from("goals").delete {
                             filter {
@@ -40,7 +43,10 @@ class GoalSync @Inject constructor(
                     currentAmount = g.currentAmount,
                     userId = g.userId
                 )
-                performRemoteMutation(
+                performRemoteMutationIfUnchanged(
+                    snapshot = g,
+                    readCurrent = { goalDao.getById(g.id) },
+
                     remoteMutation = { supabaseClient.from("goals").upsert(payload) },
                     acknowledgeLocal = { goalDao.updateSyncStatus(g.id, 0) }
                 )
