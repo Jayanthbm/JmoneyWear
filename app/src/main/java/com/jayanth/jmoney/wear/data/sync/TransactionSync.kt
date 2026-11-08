@@ -29,13 +29,17 @@ class TransactionSync @Inject constructor(
         val unsynced = transactionDao.getUnsyncedTransactions(userId)
         for (tx in unsynced) {
             if (tx.deleted == 1) {
-                supabaseClient.from("transactions").delete {
-                    filter {
-                        eq("id", tx.id)
-                        eq("user_id", userId)
-                    }
-                }
-                transactionDao.delete(tx.id)
+                performRemoteMutation(
+                    remoteMutation = {
+                        supabaseClient.from("transactions").delete {
+                            filter {
+                                eq("id", tx.id)
+                                eq("user_id", userId)
+                            }
+                        }
+                    },
+                    acknowledgeLocal = { transactionDao.delete(tx.id) }
+                )
             } else {
                 val payload = SupabaseTransactionUpsert(
                     id = tx.id,
@@ -51,27 +55,33 @@ class TransactionSync @Inject constructor(
                     latitude = tx.latitude,
                     longitude = tx.longitude
                 )
-                val uploadedTid = resolveTransactionUploadTid(
-                    upsertReturningTid = {
-                        supabaseClient.from("transactions").upsert(payload) {
-                            select(Columns.list("tid"))
-                        }.decodeSingle<TidResponse>().tid
-                    },
-                    retryUpsert = {
-                        supabaseClient.from("transactions").upsert(payload)
-                    },
-                    readServerTid = {
-                        supabaseClient.from("transactions").select(
-                            columns = Columns.list("tid")
-                        ) {
-                            filter {
-                                eq("id", tx.id)
-                                eq("user_id", userId)
+                performRemoteMutation(
+                    remoteMutation = {
+                        resolveTransactionUploadTid(
+                            upsertReturningTid = {
+                                supabaseClient.from("transactions").upsert(payload) {
+                                    select(Columns.list("tid"))
+                                }.decodeSingle<TidResponse>().tid
+                            },
+                            retryUpsert = {
+                                supabaseClient.from("transactions").upsert(payload)
+                            },
+                            readServerTid = {
+                                supabaseClient.from("transactions").select(
+                                    columns = Columns.list("tid")
+                                ) {
+                                    filter {
+                                        eq("id", tx.id)
+                                        eq("user_id", userId)
+                                    }
+                                }.decodeSingle<TidResponse>().tid
                             }
-                        }.decodeSingle<TidResponse>().tid
+                        )
+                    },
+                    acknowledgeLocal = { uploadedTid ->
+                        transactionDao.updateTidAndSyncStatus(tx.id, uploadedTid)
                     }
                 )
-                transactionDao.updateTidAndSyncStatus(tx.id, uploadedTid)
             }
         }
     }
