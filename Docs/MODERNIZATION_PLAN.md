@@ -136,3 +136,5 @@ Priority: critical.
 - 2026-11-08: Phase 3 initial theme update committed for watch-face dynamic colors and expressive motion. Full UI audit remains.
 - 2026-11-08: Added GitHub Actions Android CI workflow and initial JUnit formatting tests. Initial CI attempt exposed the removed legacy SDK `tools` package in setup-android@v3; workflow was corrected to setup-android@v4 with platform-tools only.
 - 2026-11-08: Adjusted AGP/Gradle from the newest available line to AGP 9.3.1 + Gradle 9.7.0 to stay within Kotlin 2.4.21's published fully-supported compatibility matrix. Final CI verification pending.
+- 2026-11-08: CI exposed Android 17 platform's package name as `platforms;android-37.0`; workflow now installs that exact package and creates the expected `android-37` SDK alias for AGP compatibility.
+- 2026-11-08: Added the Wear Material 3 HorizontalPagerScaffold and page indicator to the app's five main pages.
