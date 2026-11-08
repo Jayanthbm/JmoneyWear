@@ -5,6 +5,7 @@ import com.jayanth.jmoney.wear.data.database.AppDatabase
 import com.jayanth.jmoney.wear.data.database.TransactionDao
 import com.jayanth.jmoney.wear.data.database.TransactionEntity
 import com.jayanth.jmoney.wear.data.network.dto.SupabaseTransaction
+import com.jayanth.jmoney.wear.data.network.dto.SupabaseTransactionUpsert
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -36,7 +37,7 @@ class TransactionSync @Inject constructor(
                 }
                 transactionDao.delete(tx.id)
             } else {
-                val payload = SupabaseTransaction(
+                val payload = SupabaseTransactionUpsert(
                     id = tx.id,
                     amount = tx.amount,
                     description = tx.description,
@@ -47,7 +48,6 @@ class TransactionSync @Inject constructor(
                     type = tx.type,
                     userId = tx.userId,
                     productLink = tx.productLink,
-                    tid = tx.tid,
                     latitude = tx.latitude,
                     longitude = tx.longitude
                 )
