@@ -18,6 +18,7 @@ Modernize JmoneyWear in isolated, reviewable phases while preserving existing fi
 - Prefer stable releases over alpha/beta dependencies for the release build.
 - Record dependency/API decisions and migration notes in this document or linked docs.
 - Report what was changed, what was built/tested, and anything the owner must verify on the watch.
+- Do not request physical-watch testing or owner sign-off between phases. Complete all implementation phases first; reserve the owner's watch testing for Phase 6 only.
 - Do not claim a build or device test passed unless it was actually run.
 
 ## Phase 0 — Baseline and planning
@@ -74,7 +75,7 @@ Priority: critical.
 - Refresh tiles and complications to match the app theme and current Wear OS conventions.
 - Preserve all existing finance workflows and avoid introducing unnecessary navigation depth.
 
-**Exit criteria:** all key screens and tiles use a coherent Wear-first design; screenshot review across supported emulator sizes; accessibility/contrast and interaction regression checklist completed.
+**Exit criteria:** all key screens and tiles use a coherent Wear-first design; screenshot review across supported emulator sizes where tooling permits; accessibility/contrast and interaction regression checklist completed. Owner's physical-watch testing remains deferred to Phase 6.
 
 ## Phase 4 — Architecture, maintainability, and quality
 
@@ -96,7 +97,7 @@ Priority: critical.
 - Check WorkManager constraints, retries, and duplicate scheduling.
 - Ensure tile services and update helpers behave consistently after app/data changes.
 
-**Exit criteria:** watch-focused regression checklist passes and no major performance or lifecycle regressions are found.
+**Exit criteria:** automated/emulator-based watch-focused regression checks pass where tooling permits and no major performance or lifecycle regressions are found. Physical watch verification is deferred to Phase 6.
 
 ## Phase 6 — Release candidate and owner testing
 
@@ -121,3 +122,4 @@ Priority: critical.
 
 - 2026-11-08: Created `feature/wear-modernization-2026` from `master`.
 - 2026-11-08: Added this phased modernization plan. No application source code, production credentials, or runtime behavior changed.
+- 2026-11-08: Owner confirmed implementation should proceed through all phases without intermediate physical-watch testing. Physical-watch testing is reserved for the final consolidated release-candidate stage.
