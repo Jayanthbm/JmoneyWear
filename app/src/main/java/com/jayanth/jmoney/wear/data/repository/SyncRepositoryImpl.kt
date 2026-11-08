@@ -28,8 +28,6 @@ import com.jayanth.jmoney.wear.data.sync.*
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,7 +61,7 @@ class SyncRepositoryImpl @Inject constructor(
     override val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
     private val sharedPrefs = context.getSharedPreferences("sync_prefs", Context.MODE_PRIVATE)
-    private val syncMutex = Mutex()
+    private val syncOperationGate = SyncOperationGate()
 
     override suspend fun runFullSync(): Result<Unit> {
         val userId = authRepository.getCurrentUserId()
@@ -82,7 +80,7 @@ class SyncRepositoryImpl @Inject constructor(
     }
 
     private suspend fun runSync(userId: String, isPartial: Boolean): Result<Unit> {
-        return syncMutex.withLock {
+        return syncOperationGate.withLock {
             runCatching {
                 check(authRepository.getCurrentUserId() == userId) {
                     "Authenticated user changed before sync started"
@@ -127,7 +125,7 @@ class SyncRepositoryImpl @Inject constructor(
         val userId = authRepository.getCurrentUserId()
             ?: return Result.failure(Exception("User not authenticated"))
 
-        return syncMutex.withLock {
+        return syncOperationGate.withLock {
             runCatching {
                 check(authRepository.getCurrentUserId() == userId) {
                     "Authenticated user changed before local data reset"
