@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.wear.compose.material3.ColorScheme
 import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.MotionScheme
 import androidx.wear.compose.material3.dynamicColorScheme
 
 val JmoneyColorScheme = ColorScheme(
@@ -44,6 +45,7 @@ fun JmoneyTheme(
 
     MaterialTheme(
         colorScheme = watchFaceColorScheme ?: JmoneyColorScheme,
+        motionScheme = MotionScheme.expressive(),
         content = content
     )
 }
