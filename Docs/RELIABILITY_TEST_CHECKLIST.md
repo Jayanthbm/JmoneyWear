@@ -4,7 +4,7 @@ Run these checks only during the final Wear OS emulator testing stage. No interm
 
 ## Tile authentication and rendering
 
-- [ ] Reboot the watch, do not open Jmoney first, then open each data tile. Verify the tile restores the existing saved session or uses the same existing development auto-login fallback as the app.
+- [ ] Restart the Wear OS emulator, do not open Jmoney first, then open each data tile. Verify the tile restores the existing saved session or uses the same existing development auto-login fallback as the app.
 - [ ] Verify Remaining, Net Worth, Monthly Income, Monthly Expense, Budget, and Goal tiles show their actual data and do not randomly show a sign-in prompt while the saved/development session is valid.
 - [ ] Open Jmoney after launching tiles and confirm the app and tiles use the same signed-in account.
 - [ ] Verify configured Budget and Goal tiles continue to show the selected item after app restart and tile refresh.
