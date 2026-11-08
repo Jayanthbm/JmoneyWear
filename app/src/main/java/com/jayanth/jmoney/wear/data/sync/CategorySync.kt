@@ -31,10 +31,9 @@ class CategorySync @Inject constructor(
             )
             performRemoteMutationIfUnchanged(
                     snapshot = cat,
-                    readCurrent = { categoryDao.getById(cat.id) },
 
                 remoteMutation = { supabaseClient.from("categories").upsert(payload) },
-                acknowledgeLocal = { categoryDao.updateSyncStatus(cat.id, 0) }
+                acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> categoryDao.acknowledgeIfUnchanged(uploadedSnapshot) }
             )
         }
     }
