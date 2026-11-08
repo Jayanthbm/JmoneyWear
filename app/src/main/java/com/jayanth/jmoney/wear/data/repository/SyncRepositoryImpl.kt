@@ -27,6 +27,7 @@ import com.jayanth.jmoney.wear.data.network.dto.SupabaseTransaction
 import com.jayanth.jmoney.wear.data.sync.*
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,6 +106,7 @@ class SyncRepositoryImpl @Inject constructor(
             sharedPrefs.edit().putLong("last_sync_timestamp_$userId", System.currentTimeMillis()).apply()
             _syncState.value = SyncState.Success
             }.onFailure { error ->
+                if (error is CancellationException) throw error
                 _syncState.value = SyncState.Error(error.localizedMessage ?: "Sync failed")
             }
         }
@@ -126,6 +128,9 @@ class SyncRepositoryImpl @Inject constructor(
             }
             sharedPrefs.edit().remove("last_sync_timestamp_$userId").apply()
             _syncState.value = SyncState.Idle
+            }.onFailure { error ->
+                if (error is CancellationException) throw error
+                _syncState.value = SyncState.Error(error.localizedMessage ?: "Unable to reset local data")
             }
         }
     }
