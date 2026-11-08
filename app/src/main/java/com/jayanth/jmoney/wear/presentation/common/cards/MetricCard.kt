@@ -48,8 +48,7 @@ fun MetricCard(
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
-            style = MaterialTheme.typography.titleLarge,
-            color = textColor
+            style = MaterialTheme.typography.titleLarge
         )
     }
 }
