@@ -22,7 +22,6 @@ class QuickTransactionSync @Inject constructor(
             if (qt.deleted == 1) {
                 performRemoteMutationIfUnchanged(
                     snapshot = qt,
-                    readCurrent = { quickTransactionDao.getById(qt.id) },
 
                     remoteMutation = {
                         supabaseClient.from("quick_transactions").delete {
@@ -32,7 +31,7 @@ class QuickTransactionSync @Inject constructor(
                             }
                         }
                     },
-                    acknowledgeLocal = { quickTransactionDao.delete(qt.id) }
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> quickTransactionDao.deleteIfUnchanged(uploadedSnapshot) }
                 )
             } else {
                 val payload = SupabaseQuickTransaction(
@@ -50,10 +49,9 @@ class QuickTransactionSync @Inject constructor(
                 )
                 performRemoteMutationIfUnchanged(
                     snapshot = qt,
-                    readCurrent = { quickTransactionDao.getById(qt.id) },
 
                     remoteMutation = { supabaseClient.from("quick_transactions").upsert(payload) },
-                    acknowledgeLocal = { quickTransactionDao.updateSyncStatus(qt.id, 0) }
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> quickTransactionDao.acknowledgeIfUnchanged(uploadedSnapshot) }
                 )
             }
         }
