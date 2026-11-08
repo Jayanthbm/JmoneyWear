@@ -20,7 +20,10 @@ class QuickTransactionSync @Inject constructor(
         val unsynced = quickTransactionDao.getUnsynced(userId)
         for (qt in unsynced) {
             if (qt.deleted == 1) {
-                performRemoteMutation(
+                performRemoteMutationIfUnchanged(
+                    snapshot = qt,
+                    readCurrent = { quickTransactionDao.getById(qt.id) },
+
                     remoteMutation = {
                         supabaseClient.from("quick_transactions").delete {
                             filter {
@@ -45,7 +48,10 @@ class QuickTransactionSync @Inject constructor(
                     priority = qt.priority,
                     identifier = qt.identifier
                 )
-                performRemoteMutation(
+                performRemoteMutationIfUnchanged(
+                    snapshot = qt,
+                    readCurrent = { quickTransactionDao.getById(qt.id) },
+
                     remoteMutation = { supabaseClient.from("quick_transactions").upsert(payload) },
                     acknowledgeLocal = { quickTransactionDao.updateSyncStatus(qt.id, 0) }
                 )
