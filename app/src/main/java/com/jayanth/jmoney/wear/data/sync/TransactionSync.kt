@@ -34,7 +34,7 @@ class TransactionSync @Inject constructor(
                     }
                     transactionDao.delete(tx.id)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    throw e
                 }
             } else {
                 val payload = SupabaseTransaction(
@@ -69,13 +69,12 @@ class TransactionSync @Inject constructor(
         var lastTid = 0
         if (isPartial) {
             lastTid = transactionDao.getMaxTid(userId) ?: 0
-        } else {
-            transactionDao.deleteAllForUser(userId)
         }
 
         val chunkSize = 1000
         var offset = 0
         var hasMore = true
+        val remoteEntities = mutableListOf<TransactionEntity>()
 
         while (hasMore) {
             val response = supabaseClient.from("transactions").select(
@@ -125,10 +124,20 @@ class TransactionSync @Inject constructor(
                         updatedAt = item.updatedAt ?: Instant.now().toString()
                     )
                 }
-                db.withTransaction {
-                    transactionDao.insertOrReplace(entities)
-                }
-                offset += chunkSize
+                remoteEntities += entities
+                offset += remoteTxList.size
+            }
+        }
+
+        // Do not touch the local snapshot until every remote page has been fetched
+        // and decoded successfully. Preserve pending local edits and tombstones.
+        db.withTransaction {
+            if (!isPartial) {
+                val pendingLocalChanges = transactionDao.getUnsyncedTransactions(userId)
+                transactionDao.deleteAllForUser(userId)
+                transactionDao.insertOrReplace(remoteEntities + pendingLocalChanges)
+            } else if (remoteEntities.isNotEmpty()) {
+                transactionDao.insertOrReplace(remoteEntities)
             }
         }
     }
