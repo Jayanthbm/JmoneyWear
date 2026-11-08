@@ -88,6 +88,7 @@ fun WearApp(
     JmoneyTheme {
         AppScaffold {
             val authState by loginViewModel.authState.collectAsState()
+            val session by loginViewModel.sessionFlow.collectAsState()
             var hasSynced by remember { mutableStateOf(true) } // Default to true while loading
 
             LaunchedEffect(authState, hasSynced) {
@@ -96,8 +97,9 @@ fun WearApp(
                 }
             }
 
-            when (authState) {
-                is AuthState.Authenticated -> {
+            val isAuthenticated = authState is AuthState.Authenticated && session != null
+            when {
+                isAuthenticated -> {
                     if (!hasSynced) {
                         SyncScreen(
                             onSyncSuccess = {
@@ -139,7 +141,7 @@ fun WearApp(
                         }
                     }
                 }
-                is AuthState.Loading -> {
+                authState is AuthState.Loading -> {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
