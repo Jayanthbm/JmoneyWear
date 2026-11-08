@@ -31,7 +31,6 @@ class TransactionSync @Inject constructor(
             if (tx.deleted == 1) {
                 performRemoteMutationIfUnchanged(
                     snapshot = tx,
-                    readCurrent = { transactionDao.getById(tx.id) },
 
                     remoteMutation = {
                         supabaseClient.from("transactions").delete {
@@ -41,7 +40,7 @@ class TransactionSync @Inject constructor(
                             }
                         }
                     },
-                    acknowledgeLocal = { transactionDao.delete(tx.id) }
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> transactionDao.deleteIfUnchanged(uploadedSnapshot) }
                 )
             } else {
                 val payload = SupabaseTransactionUpsert(
@@ -60,7 +59,6 @@ class TransactionSync @Inject constructor(
                 )
                 performRemoteMutationIfUnchanged(
                     snapshot = tx,
-                    readCurrent = { transactionDao.getById(tx.id) },
 
                     remoteMutation = {
                         resolveTransactionUploadTid(
@@ -84,8 +82,8 @@ class TransactionSync @Inject constructor(
                             }
                         )
                     },
-                    acknowledgeLocal = { uploadedTid ->
-                        transactionDao.updateTidAndSyncStatus(tx.id, uploadedTid)
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, uploadedTid ->
+                        transactionDao.updateTidAndSyncStatusIfUnchanged(uploadedSnapshot, uploadedTid)
                     }
                 )
             }
