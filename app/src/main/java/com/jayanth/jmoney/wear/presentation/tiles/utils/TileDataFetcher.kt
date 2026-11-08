@@ -1,9 +1,12 @@
 package com.jayanth.jmoney.wear.presentation.tiles.utils
 
+import com.jayanth.jmoney.wear.BuildConfig
 import com.jayanth.jmoney.wear.data.database.TransactionDao
 import com.jayanth.jmoney.wear.data.repository.AuthRepository
 import java.time.LocalDate
 import com.jayanth.jmoney.wear.data.database.BudgetDao
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
@@ -30,10 +33,25 @@ class TileDataFetcher @Inject constructor(
         return sessionRestoreMutex.withLock {
             authRepository.getCurrentUserId()?.let { return@withLock it }
             if (authRepository.autoLogin()) {
-                authRepository.getCurrentUserId()
-            } else {
-                null
+                return@withLock authRepository.getCurrentUserId()
             }
+
+            // Match MainActivity's existing development auto-login behavior.
+            // Read the existing BuildConfig values; never redefine or mutate them.
+            val devEmail = BuildConfig.DEV_EMAIL
+            val devPassword = BuildConfig.DEV_PASSWORD
+            if (devEmail.isBlank() || devPassword.isBlank()) {
+                return@withLock null
+            }
+
+            val signInResult = authRepository.signInWithEmail(devEmail, devPassword)
+            if (signInResult.isFailure) {
+                return@withLock null
+            }
+
+            withTimeoutOrNull(10_000L) {
+                authRepository.sessionFlow.first { it?.user?.id != null }?.user?.id
+            } ?: authRepository.getCurrentUserId()
         }
     }
 
