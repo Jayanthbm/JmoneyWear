@@ -56,6 +56,10 @@ class CategorySync @Inject constructor(
                 priority = item.priority
             )
         }
+        if (remoteList.isEmpty() && categoryDao.getCategories(userId).isNotEmpty()) {
+            throw IllegalStateException("Remote snapshot for category is empty while local records exist; refusing destructive replacement")
+        }
+
         db.withTransaction {
             val pendingLocalChanges = categoryDao.getUnsyncedCategories(userId)
             categoryDao.deleteAllForUser(userId)
