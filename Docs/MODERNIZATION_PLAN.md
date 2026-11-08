@@ -44,9 +44,9 @@ Modernize JmoneyWear in isolated, reviewable phases while preserving existing fi
 - Build after each logical upgrade group and resolve deprecations or breaking API changes.
 - Update dependency catalog and document compatibility decisions.
 
-**Selected stable baseline (2026-11-08):** Android 17 API 37 (compileSdk/targetSdk 37); Android Gradle Plugin 9.3.1; Gradle 9.7.0; Kotlin 2.4.21; Compose BOM 2026.09.00; Wear Compose libraries 1.7.1; Room 2.8.5; WorkManager 2.12.0; Lifecycle 2.11.0; Wear Tiles 1.6.2; ProtoLayout 1.4.2. Java source/target compatibility is 17. These choices prioritize the published Kotlin 2.4.21 compatibility ceiling (AGP up to 9.3.1 and Gradle up to 9.7.0) while retaining API 37 support. They remain subject to CI verification. The app's minSdk remains 30.
+**Selected stable baseline (2026-11-08):** Android 17 API 37 (compileSdk/targetSdk 37); Android Gradle Plugin 9.3.1; Gradle 9.7.0; Kotlin 2.4.21; Compose BOM 2026.09.00; Wear Compose libraries 1.7.1; Room 2.8.5; WorkManager 2.12.0; Lifecycle 2.11.0; Wear Tiles 1.6.2; ProtoLayout 1.4.2. Java source/target compatibility is 17. These choices prioritize the published Kotlin 2.4.21 compatibility ceiling (AGP up to 9.3.1 and Gradle up to 9.7.0) while retaining API 37 support. The complete CI workflow passed on 2026-11-08. The app's minSdk remains 30.
 
-**Implementation status:** dependency catalog, Gradle wrapper, SDK levels, Java compatibility, and version metadata have been upgraded. CI verification is pending. App version is now 2.1.0 (versionCode 7). Existing credential-related code and build configuration were not modified.
+**Implementation status:** dependency catalog, Gradle wrapper, SDK levels, Java compatibility, and version metadata have been upgraded. GitHub Actions run `42458702990` passed unit tests, lint, and debug APK assembly. App version is now 2.1.0 (versionCode 7). Existing credential-related code and build configuration were not modified.
 
 **Exit criteria:** clean Gradle sync and successful debug build; dependency matrix documented; no intentional product behavior changes.
 
@@ -64,7 +64,7 @@ Priority: critical.
 - Review retry/backoff, per-user scoping, sign-out behavior, and immediate sync after local writes.
 - Add focused unit/integration tests using fakes or an isolated test database; never use production data for destructive tests.
 
-**Implementation status:** transaction full refresh now fetches and decodes the remote pages before local replacement, preserves pending local edits/tombstones, and refuses suspicious empty snapshots when local data exists. Other entity sync refreshes preserve pending local changes and refuse suspicious empty snapshots. Upload failures now propagate; sync and local reset operations are serialized. Automated verification remains pending.
+**Implementation status:** transaction full refresh fetches and decodes remote pages before local replacement, preserves pending local edits/tombstones, and refuses suspicious empty snapshots when local data exists. Other entity sync refreshes preserve pending local changes and refuse suspicious empty snapshots. Upload failures propagate; sync and local reset operations are serialized. Pure snapshot-merge tests cover remote rows, pending edits, tombstones, local-only rows, and duplicate remote IDs. CI passes, but integration/failure-injection coverage remains incomplete.
 
 **Exit criteria:** tests demonstrate that network failures, partial failures, and overlapping sync requests do not lose local changes; normal sync behavior remains intact.
 
@@ -93,7 +93,7 @@ Priority: critical.
 - Review manifest permissions and remove only permissions proven unnecessary.
 - Improve README with setup, architecture, build, testing, and troubleshooting instructions.
 
-**Implementation status:** added a GitHub Actions workflow for unit tests, lint, debug APK assembly and artifact upload; added initial JUnit tests for formatting helpers; enabled Room schema export. Broader sync tests and migration coverage remain. Settings full-sync feedback and Wear tile session restoration are included in the current reliability pass.
+**Implementation status:** GitHub Actions runs unit tests, lint, debug APK assembly, Room schema export/commit, and artifact upload. The version-1 Room schema is now committed at `app/schemas/.../1.json`. Formatting and snapshot-merge unit tests exist; broader sync integration tests and future migration tests remain. Settings full-sync feedback and Wear tile session restoration are included in the current reliability pass.
 
 **Exit criteria:** meaningful automated coverage for critical paths, schema/migration baseline committed, and no known high-risk static-review findings left unexplained.
 
@@ -125,16 +125,15 @@ Priority: critical.
 
 ## Current known risks and remaining work
 
-1. **CI verification is pending.** The latest run has completed runner, JDK, Android SDK, and Gradle setup, but its combined unit-test/lint/debug-APK step is still running. Do not treat the build as passed until the workflow finishes successfully.
-2. **Sync regression coverage is insufficient.** Add tests for interrupted remote page retrieval, failed upload, empty remote snapshot protection, pending local edits/tombstones, and concurrent full/partial sync. The source changes are implemented but not yet verified by those tests.
-3. **Partial transaction sync assumption needs validation.** It fetches rows with `tid > max(local tid)`; verify the Supabase `tid` contract guarantees every remote update receives a higher tid, otherwise existing rows updated remotely may not be fetched.
-4. **Room migration baseline is incomplete.** Schema export is enabled, but the database remains at version 1 and the generated schema must be confirmed in CI. Add migration tests before any future schema change.
-5. **Material 3 Expressive audit is incomplete.** Review all five screens, dialogs, empty/loading/error states, tile layouts, curved-edge clipping, font scaling, and accessibility on Wear OS emulator configurations.
-6. **Tile reliability needs emulator verification.** The session restore path now matches the existing app login behavior and uses unchanged BuildConfig credentials, but cold-start tile host behavior and each tile's empty/error state still need validation.
-7. **Settings sync UX needs emulator verification.** Confirm full-width button layout, progress/result messaging, disabled sign-out while syncing, and tile refresh only after successful sync.
-8. **Release candidate is not ready.** The final APK, CI artifact, clean-build confirmation, and owner emulator regression pass remain outstanding.
+1. **Sync regression coverage is still incomplete.** Add failure-injection tests for interrupted remote page retrieval, failed uploads, suspicious empty snapshots, and concurrent full/partial sync. Existing unit tests cover formatting and the pure transaction snapshot merge helper only.
+2. **Partial transaction sync assumption needs backend validation.** Partial sync fetches rows with `tid > max(local tid)`. The Wear client repository contains no SQL trigger/function or server migration proving that every update to an existing transaction receives a new, higher `tid`. Do not change this algorithm based on guesswork; verify the actual Supabase schema/trigger contract before treating it as safe.
+3. **Room schema baseline is captured, but migration tests are not yet needed/available.** The current version-1 schema was generated and committed by CI. Keep version 1 unchanged for this modernization; add an explicit migration and migration test before any future schema change.
+4. **Material 3 Expressive audit is incomplete.** Review all five screens, dialogs, empty/loading/error states, tile layouts, curved-edge clipping, font scaling, and accessibility on Wear OS emulator configurations.
+5. **Tile reliability needs emulator verification.** The session restore path uses the existing auth repository and unchanged BuildConfig credentials, but cold-start tile host behavior and each tile's empty/error state still need validation.
+6. **Settings sync UX needs emulator verification.** Confirm full-width button layout, progress/result messaging, disabled sign-out while syncing, and tile refresh only after successful sync.
+7. **Release candidate is not ready.** The CI debug APK artifact exists, but a final post-change build, APK installation/data-preservation check, and owner emulator regression pass remain outstanding.
 
-The earlier destructive-refresh, swallowed-upload-error, and unsynchronized-sync risks have source-level mitigations in place; they are not considered closed until the regression tests and CI pass.
+The earlier destructive-refresh, swallowed-upload-error, and unsynchronized-sync risks have source-level mitigations in place; they are not considered closed until targeted sync failure tests and emulator verification are complete.
 
 ## Progress log
 
@@ -152,3 +151,6 @@ The earlier destructive-refresh, swallowed-upload-error, and unsynchronized-sync
 - 2026-11-08: Reliability follow-up: tile data access now restores the persisted Supabase session on demand under a mutex before resolving the current user. Updated tile fallback text, improved Settings full-sync button sizing and status feedback, and refreshes tiles only after successful full sync. Credentials and auth values remain unchanged. CI verification pending.
 
 - 2026-11-08: Owner confirmed they plan to run the final consolidated checks on a Wear OS emulator later today. No intermediate device testing is requested; implementation and automated verification continue on this branch first.
+
+- 2026-11-08: GitHub Actions run `42458702990` passed `testDebugUnitTest`, `lintDebug`, and `assembleDebug`; Room schema export was committed as `573af5e`, and the debug APK artifact was uploaded.
+- 2026-11-08: Added snapshot-merger tests for pending local-only rows and duplicate remote IDs. Backend `tid` update semantics remain unverified because this repository contains no server-side schema/trigger definition.
