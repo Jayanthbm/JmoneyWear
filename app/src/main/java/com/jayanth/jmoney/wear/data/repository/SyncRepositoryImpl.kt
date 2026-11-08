@@ -27,6 +27,8 @@ import com.jayanth.jmoney.wear.data.network.dto.SupabaseTransaction
 import com.jayanth.jmoney.wear.data.sync.*
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,6 +62,7 @@ class SyncRepositoryImpl @Inject constructor(
     override val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
 
     private val sharedPrefs = context.getSharedPreferences("sync_prefs", Context.MODE_PRIVATE)
+    private val syncMutex = Mutex()
 
     override suspend fun runFullSync(): Result<Unit> {
         val userId = authRepository.getCurrentUserId() ?: return Result.failure(Exception("User not authenticated"))
@@ -72,7 +75,8 @@ class SyncRepositoryImpl @Inject constructor(
     }
 
     private suspend fun runSync(userId: String, isPartial: Boolean): Result<Unit> {
-        return runCatching {
+        return syncMutex.withLock {
+            runCatching {
             _syncState.value = SyncState.Syncing("Pushing local changes...")
             pushLocalChanges(userId)
 
@@ -99,8 +103,9 @@ class SyncRepositoryImpl @Inject constructor(
 
             sharedPrefs.edit().putLong("last_sync_timestamp_$userId", System.currentTimeMillis()).apply()
             _syncState.value = SyncState.Success
-        }.onFailure { error ->
-            _syncState.value = SyncState.Error(error.localizedMessage ?: "Sync failed")
+            }.onFailure { error ->
+                _syncState.value = SyncState.Error(error.localizedMessage ?: "Sync failed")
+            }
         }
     }
 
