@@ -66,12 +66,18 @@ class SyncRepositoryImpl @Inject constructor(
     private val syncMutex = Mutex()
 
     override suspend fun runFullSync(): Result<Unit> {
-        val userId = authRepository.getCurrentUserId() ?: return Result.failure(Exception("User not authenticated"))
+        val userId = authRepository.getCurrentUserId()
+        if (userId == null) {
+            val error = IllegalStateException("User not authenticated")
+            _syncState.value = SyncState.Error(error.message ?: "User not authenticated")
+            return Result.failure(error)
+        }
         return runSync(userId, isPartial = false)
     }
 
     override suspend fun runPartialSync(): Result<Unit> {
-        val userId = authRepository.getCurrentUserId() ?: return Result.failure(Exception("User not authenticated"))
+        val userId = authRepository.getCurrentUserId()
+            ?: return Result.failure(IllegalStateException("User not authenticated"))
         return runSync(userId, isPartial = true)
     }
 
