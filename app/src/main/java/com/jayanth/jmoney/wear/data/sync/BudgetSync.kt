@@ -24,7 +24,6 @@ class BudgetSync @Inject constructor(
             if (b.deleted == 1) {
                 performRemoteMutationIfUnchanged(
                     snapshot = b,
-                    readCurrent = { budgetDao.getById(b.id) },
 
                     remoteMutation = {
                         supabaseClient.from("budgets").delete {
@@ -34,7 +33,7 @@ class BudgetSync @Inject constructor(
                             }
                         }
                     },
-                    acknowledgeLocal = { budgetDao.delete(b.id) }
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> budgetDao.deleteIfUnchanged(uploadedSnapshot) }
                 )
             } else {
                 val catList = try {
@@ -54,10 +53,9 @@ class BudgetSync @Inject constructor(
                 )
                 performRemoteMutationIfUnchanged(
                     snapshot = b,
-                    readCurrent = { budgetDao.getById(b.id) },
 
                     remoteMutation = { supabaseClient.from("budgets").upsert(payload) },
-                    acknowledgeLocal = { budgetDao.updateSyncStatus(b.id, 0) }
+                    acknowledgeLocalIfUnchanged = { uploadedSnapshot, _ -> budgetDao.acknowledgeIfUnchanged(uploadedSnapshot) }
                 )
             }
         }
