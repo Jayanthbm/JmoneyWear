@@ -2,6 +2,7 @@ package com.jayanth.jmoney.wear.data.work
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker
+import kotlinx.coroutines.CancellationException
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.jayanth.jmoney.wear.data.repository.SyncRepository
@@ -24,6 +25,8 @@ class SyncWorker @AssistedInject constructor(
             } else {
                 Result.retry()
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.retry()
         }
