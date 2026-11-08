@@ -26,12 +26,10 @@ class PayeeSync @Inject constructor(
                 userId = payee.userId,
                 priority = payee.priority
             )
-            try {
-                supabaseClient.from("payees").upsert(payload)
-                payeeDao.updateSyncStatus(payee.id, 0)
-            } catch (e: Exception) {
-                    throw e
-                }
+            performRemoteMutation(
+                remoteMutation = { supabaseClient.from("payees").upsert(payload) },
+                acknowledgeLocal = { payeeDao.updateSyncStatus(payee.id, 0) }
+            )
         }
     }
 
