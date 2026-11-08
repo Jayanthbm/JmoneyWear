@@ -64,7 +64,7 @@ Priority: critical.
 - Review retry/backoff, per-user scoping, sign-out behavior, and immediate sync after local writes.
 - Add focused unit/integration tests using fakes or an isolated test database; never use production data for destructive tests.
 
-**Implementation status:** transaction full refresh fetches and decodes remote pages before local replacement, preserves pending local edits/tombstones, and refuses suspicious empty snapshots when local data exists. Other entity sync refreshes preserve pending local changes and refuse suspicious empty snapshots. Upload failures propagate; sync and local reset operations are serialized. Pure snapshot-merge tests cover remote rows, pending edits, tombstones, local-only rows, and duplicate remote IDs. CI passes, but integration/failure-injection coverage remains incomplete.
+**Implementation status:** transaction full refresh fetches and decodes remote pages before local replacement, preserves pending local edits/tombstones, and refuses suspicious empty snapshots when local data exists. Other entity sync refreshes preserve pending local changes and refuse suspicious empty snapshots. Upload failures propagate; sync and local reset operations are serialized. Pure snapshot-merge tests cover remote rows, pending edits, tombstones, local-only rows, and duplicate remote IDs. Transaction upload-recovery tests cover successful first response, ambiguous response retry plus server-tid readback, cancellation without retry, and preservation of the original failure. CI verification is running for the latest changes; broader integration/failure-injection coverage remains incomplete.
 
 **Exit criteria:** tests demonstrate that network failures, partial failures, and overlapping sync requests do not lose local changes; normal sync behavior remains intact.
 
@@ -93,7 +93,7 @@ Priority: critical.
 - Review manifest permissions and remove only permissions proven unnecessary.
 - Improve README with setup, architecture, build, testing, and troubleshooting instructions.
 
-**Implementation status:** GitHub Actions is configured for verification-only CI (`testDebugUnitTest` and `lintDebug`); it does not assemble or upload debug APKs. The version-1 Room schema is already committed at `app/schemas/.../1.json`. Formatting and snapshot-merge unit tests exist; broader sync integration tests and future migration tests remain. Settings full-sync feedback and Wear tile session restoration are included in the current reliability pass.
+**Implementation status:** GitHub Actions is configured for verification-only CI (`testDebugUnitTest` and `lintDebug`); it does not assemble or upload debug APKs. The version-1 Room schema is already committed at `app/schemas/.../1.json`. Formatting and snapshot-merge unit tests exist; broader sync integration tests and future migration tests remain. Settings full-sync feedback and Wear tile session restoration are included in the current reliability pass. A full-sync attempt without an authenticated user now updates the visible sync state with an error instead of silently returning a failed Result.
 
 **Exit criteria:** meaningful automated coverage for critical paths, schema/migration baseline committed, and no known high-risk static-review findings left unexplained.
 
@@ -160,3 +160,6 @@ The earlier destructive-refresh, swallowed-upload-error, and unsynchronized-sync
 
 - 2026-11-08: Transaction upload recovery hardened: cancellation is never converted into a retry, fallback upsert is followed by a user-scoped read of the server-assigned `tid`, and the local row is marked clean only after the cursor is recovered. Transaction deletes are now scoped by both transaction ID and user ID.
 - 2026-11-08: Owner requested no cloud debug APK generation. GitHub Actions was changed to run only `testDebugUnitTest` and `lintDebug`; `assembleDebug`, Room schema write-back, artifact upload, and unnecessary write permission were removed. The committed Room v1 schema remains in source control. Owner will build the installable APK locally for emulator testing.
+
+- 2026-11-08: Added focused transaction upload-recovery tests (first-response success, ambiguous response retry/readback, cancellation, and chained failure diagnostics). The sync repository now surfaces an unauthenticated manual full-sync attempt through its observable error state instead of leaving Settings idle.
+- 2026-11-08: README and emulator checklist now direct the owner to build the APK locally; GitHub Actions runs tests and lint only, with no cloud APK build or artifact upload.
