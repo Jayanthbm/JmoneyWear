@@ -7,7 +7,7 @@ Use this checklist only after all modernization phases are complete and a consol
 - [ ] Confirm the APK version is 2.1.0 / versionCode 7 or newer.
 - [ ] Confirm the current app has completed a successful sync.
 - [ ] Do not uninstall the existing app to work around a signing mismatch; uninstalling can erase local-only Room data.
-- [ ] For an in-place update, build locally with the same signing key used by the currently installed app. A GitHub Actions debug APK is signed with the runner's temporary debug key and may not update an existing local debug installation.
+- [ ] Generate the debug APK locally with `./gradlew --no-daemon assembleDebug`. For an in-place update, use the same signing key as the currently installed app.
 
 ## Install and account
 
@@ -72,4 +72,4 @@ Include the APK version, emulator device profile, Wear OS version, steps perform
 - [ ] Use a round Wear OS emulator profile representative of the target watch size; also try a second screen size if available.
 - [ ] Keep the existing emulator app data when testing an in-place upgrade. Do not clear app storage or uninstall to bypass an install/signature issue.
 - [ ] Capture Logcat around tile host launches, cold starts, authentication restoration, and sync failures.
-- [ ] If the CI debug APK cannot update the installed build because its debug signing key differs, install it only on a disposable emulator profile or build locally with the matching signing key; do not delete the user's existing app data.
+- [ ] If the locally generated APK cannot update the installed build because its signing key differs, do not delete existing app data to bypass the mismatch. Use a separate disposable emulator profile or the matching signing key.
