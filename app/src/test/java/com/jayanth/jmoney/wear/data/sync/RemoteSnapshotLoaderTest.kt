@@ -54,7 +54,7 @@ class RemoteSnapshotLoaderTest {
     fun cancellationIsNotConvertedIntoPartialSnapshot() {
         assertThrows(CancellationException::class.java) {
             runBlocking {
-                fetchCompleteRemoteSnapshot(pageSize = 1) { _, _ ->
+                fetchCompleteRemoteSnapshot<Int>(pageSize = 1) { _, _ ->
                     throw CancellationException("Cancelled while paging")
                 }
             }
